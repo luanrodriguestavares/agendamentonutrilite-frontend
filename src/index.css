@@ -1,0 +1,101 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+	:root {
+		--background: 0 0% 100%;
+		--foreground: 222.2 84% 4.9%;
+		--card: 0 0% 100%;
+		--card-foreground: 222.2 84% 4.9%;
+		--popover: 0 0% 100%;
+		--popover-foreground: 222.2 84% 4.9%;
+		--primary: 160 84% 39%;
+		--primary-foreground: 0 0% 100%;
+		--secondary: 151 81% 95%;
+		--secondary-foreground: 222.2 100% 4.9%;
+		--muted: 210 40% 96.1%;
+		--muted-foreground: 215.4 16.3% 46.9%;
+		--accent: 151 81% 95%;
+		--accent-foreground: 222.2 84% 4.9%;
+		--destructive: 0 84.2% 60.2%;
+		--destructive-foreground: 210 40% 98%;
+		--border: 214.3 31.8% 91.4%;
+		--input: 214.3 31.8% 91.4%;
+		--ring: 160 84% 39%;
+		--radius: 0.75rem;
+	}
+}
+
+@layer base {
+	* {
+		@apply border-border;
+	}
+
+	body {
+		@apply bg-background text-foreground;
+	}
+}
+
+::-webkit-scrollbar {
+	width: 10px;
+}
+
+::-webkit-scrollbar-track {
+	background-color: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+	background-color: #dcdcdc;
+	border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+	background-color: #b3b3b3;
+}
+
+@keyframes fadeIn {
+	from {
+		opacity: 0;
+	}
+
+	to {
+		opacity: 1;
+	}
+}
+
+@keyframes slideUp {
+	from {
+		transform: translateY(10px);
+		opacity: 0;
+	}
+
+	to {
+		transform: translateY(0);
+		opacity: 1;
+	}
+}
+
+.animate-fade-in {
+	animation: fadeIn 0.3s ease-in-out;
+}
+
+.animate-slide-up {
+	animation: slideUp 0.4s ease-out;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator {
+	cursor: pointer;
+	filter: invert(60%) sepia(30%) saturate(1000%) hue-rotate(120deg) brightness(90%) contrast(95%);
+}
+
+input[type="date"]:focus::-webkit-calendar-picker-indicator {
+	filter: invert(60%) sepia(60%) saturate(1000%) hue-rotate(120deg) brightness(90%) contrast(95%);
+}
+
+@media (max-width: 640px) {
+	.container {
+		padding-left: 1rem;
+		padding-right: 1rem;
+	}
+}
