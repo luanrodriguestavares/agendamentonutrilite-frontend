@@ -71,7 +71,31 @@ const AgendamentoTimeForm = ({ dados, onChange, onError }) => {
         const diaSemana = date.getDay()
         const ehFinalDeSemana = diaSemana === 0 || diaSemana === 6 || formData.isFeriado
 
-        if (ehFinalDeSemana) {
+        const ehProximoFinalDeSemana = (dataVerificar) => {
+            const dataAtual = new Date(agora)
+            const proximaSexta = new Date(dataAtual)
+
+            // Ajusta para a próxima sexta-feira
+            while (proximaSexta.getDay() !== 5) {
+                proximaSexta.setDate(proximaSexta.getDate() + 1)
+            }
+
+            // Define o início (sábado) e fim (domingo) do próximo fim de semana
+            const inicioProximoFds = new Date(proximaSexta)
+            inicioProximoFds.setDate(proximaSexta.getDate() + 1)
+            inicioProximoFds.setHours(0, 0, 0, 0)
+
+            const fimProximoFds = new Date(inicioProximoFds)
+            fimProximoFds.setDate(inicioProximoFds.getDate() + 1)
+            fimProximoFds.setHours(23, 59, 59, 999)
+
+            const dataVerificarInicio = new Date(dataVerificar)
+            dataVerificarInicio.setHours(0, 0, 0, 0)
+
+            return dataVerificarInicio >= inicioProximoFds && dataVerificarInicio <= fimProximoFds
+        }
+
+        if (ehFinalDeSemana && ehProximoFinalDeSemana(date)) {
             if (agora.getDay() === 5) {
                 const limite = new Date(agora)
                 limite.setHours(9, 0, 0, 0)
@@ -79,7 +103,7 @@ const AgendamentoTimeForm = ({ dados, onChange, onError }) => {
                 if (agora > limite) {
                     onError(
                         "Horário limite excedido",
-                        "Em sextas-feiras, agendamentos para fins de semana e feriados devem ser feitos até às 09:00h."
+                        "Em sextas-feiras, agendamentos para o próximo fim de semana devem ser feitos até às 09:00h."
                     )
                     return false
                 }

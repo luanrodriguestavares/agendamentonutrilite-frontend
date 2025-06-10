@@ -11,12 +11,7 @@ export default function AgendamentoDetailModal({ agendamento, isOpen, onClose })
 	const adjustDate = (dateString) => {
 		if (!dateString) return null
 		const date = new Date(dateString)
-
-		const userTimezoneOffset = date.getTimezoneOffset() * 60000
-		const adjustedDate = new Date(date.getTime() + userTimezoneOffset)
-		adjustedDate.setHours(0, 0, 0, 0)
-
-		return adjustedDate
+		return new Date(date.getTime() + date.getTimezoneOffset() * 60000)
 	}
 
 	const getStatusBadge = (status) => {

@@ -105,6 +105,11 @@ const HomeOfficeForm = ({ dados, onChange, onError }) => {
             return
         }
 
+        if (formData.refeicoes.length === 0) {
+            onError("Refeições não selecionadas", "Por favor, selecione pelo menos uma refeição antes de escolher a data.")
+            return
+        }
+
         if (field === "dataFim" && !formData.dataInicio) {
             onError("Sequência inválida", "Por favor, selecione a data de início primeiro.")
             return
@@ -204,6 +209,31 @@ const HomeOfficeForm = ({ dados, onChange, onError }) => {
                 </Select>
             </div>
 
+            {formData.turno && (
+                <div className="space-y-3 animate-in fade-in-50 duration-300">
+                    <Label className="flex items-center gap-2">
+                        <Utensils className="h-4 w-4 text-emerald-600" />
+                        Refeições:
+                    </Label>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 p-4 bg-gray-50 rounded-lg">
+                        {getRefeicoesPorTurno().map((refeicao) => (
+                            <div key={refeicao} className="flex items-center space-x-2">
+                                <Checkbox
+                                    id={`checkbox${refeicao}`}
+                                    checked={formData.refeicoes.includes(refeicao)}
+                                    onCheckedChange={(checked) => handleRefeicaoChange(refeicao, checked)}
+                                    className="data-[state=checked]:bg-emerald-600 data-[state=checked]:border-emerald-600"
+                                    required
+                                />
+                                <Label htmlFor={`checkbox${refeicao}`} className="cursor-pointer">
+                                    {refeicao}
+                                </Label>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
                     <Label htmlFor="dataInicio" className="flex items-center gap-2">
@@ -243,31 +273,6 @@ const HomeOfficeForm = ({ dados, onChange, onError }) => {
                     </Select>
                 </div>
             </div>
-
-            {formData.turno && (
-                <div className="space-y-3 animate-in fade-in-50 duration-300">
-                    <Label className="flex items-center gap-2">
-                        <Utensils className="h-4 w-4 text-emerald-600" />
-                        Refeições:
-                    </Label>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 p-4 bg-gray-50 rounded-lg">
-                        {getRefeicoesPorTurno().map((refeicao) => (
-                            <div key={refeicao} className="flex items-center space-x-2">
-                                <Checkbox
-                                    id={`checkbox${refeicao}`}
-                                    checked={formData.refeicoes.includes(refeicao)}
-                                    onCheckedChange={(checked) => handleRefeicaoChange(refeicao, checked)}
-                                    className="data-[state=checked]:bg-emerald-600 data-[state=checked]:border-emerald-600"
-                                    required
-                                />
-                                <Label htmlFor={`checkbox${refeicao}`} className="cursor-pointer">
-                                    {refeicao}
-                                </Label>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            )}
 
             <div className="space-y-2">
                 <Label htmlFor="observacao" className="flex items-center gap-2">

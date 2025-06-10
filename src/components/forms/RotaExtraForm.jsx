@@ -4,7 +4,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { DatePicker } from "@/components/ui/date-picker"
-import { Calendar, Users, DollarSign, MapPin, FileText, Clock, Building, Coffee } from "lucide-react"
+import { Calendar, Users, DollarSign, MapPin, FileText } from "lucide-react"
 import { TIMES_SETORES, CENTROS_CUSTO, validarRotaExtra } from "../../utils/validacoes-agendamento"
 
 const RotaExtraForm = ({ dados, onChange, onError }) => {
@@ -25,61 +25,11 @@ const RotaExtraForm = ({ dados, onChange, onError }) => {
     }, [formData, onChange])
 
     const handleInputChange = (field, value) => {
-        if (field === "turno") {
-            setFormData((prev) => ({
-                ...prev,
-                [field]: value,
-                data: null,
-            }))
-            return
-        }
         setFormData((prev) => ({ ...prev, [field]: value }))
     }
 
-    const validarHorarioAgendamento = (date) => {
-        if (!formData.turno) {
-            onError("Turno não selecionado", "Por favor, selecione o turno antes de escolher a data.")
-            return false
-        }
-
-        const agora = new Date()
-        const hoje = new Date()
-        hoje.setHours(0, 0, 0, 0)
-        const dataAgendamento = new Date(date)
-        dataAgendamento.setHours(0, 0, 0, 0)
-
-        // Se for sexta-feira, aplica a restrição de horário
-        if (agora.getDay() === 5) {
-            const limite = new Date(agora)
-            limite.setHours(11, 0, 0, 0)
-
-            // Verifica se a data é para o fim de semana atual
-            const sabado = new Date(hoje)
-            while (sabado.getDay() !== 6) {
-                sabado.setDate(sabado.getDate() + 1)
-            }
-            const domingo = new Date(sabado)
-            domingo.setDate(sabado.getDate() + 1)
-
-            if ((dataAgendamento.getTime() === sabado.getTime() || dataAgendamento.getTime() === domingo.getTime()) && agora > limite) {
-                onError(
-                    "Horário limite excedido",
-                    "Em sextas-feiras, agendamentos para o fim de semana atual devem ser feitos até às 11:00h."
-                )
-                return false
-            }
-        }
-
-        return true
-    }
-
-    const handleDataChange = (date) => {
+    const handleDataChange = (field, date) => {
         if (!date) return
-
-        if (!formData.turno) {
-            onError("Turno não selecionado", "Por favor, selecione o turno antes de escolher a data.")
-            return
-        }
 
         const hoje = new Date()
         hoje.setHours(0, 0, 0, 0)
@@ -89,94 +39,126 @@ const RotaExtraForm = ({ dados, onChange, onError }) => {
             return
         }
 
-        // Verifica se é fim de semana
-        const diaSemana = date.getDay()
-        if (diaSemana !== 0 && diaSemana !== 6) {
-            onError("Data inválida", "A rota extra só pode ser agendada para sábados e domingos.")
-            return
+        if (field === "dataInicio") {
+            const resultado = validarRotaExtra(formData)
+            if (!resultado.permitido) {
+                onError("Horário limite excedido", resultado.mensagem)
+                return
+            }
         }
 
-        if (!validarHorarioAgendamento(date)) {
-            return
-        }
-
-        setFormData((prev) => ({ ...prev, data: date }))
+        setFormData((prev) => ({ ...prev, [field]: date }))
     }
 
     return (
         <div className="space-y-6 animate-in fade-in-50 duration-300">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                    <Label htmlFor="selectTimeSetor" className="flex items-center gap-2">
+                        <Users className="h-4 w-4 text-emerald-600" />
+                        Time/Setor:
+                    </Label>
+                    <Select value={formData.timeSetor} onValueChange={(value) => handleInputChange("timeSetor", value)}>
+                        <SelectTrigger id="selectTimeSetor" className="w-full">
+                            <SelectValue placeholder="Selecione" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {TIMES_SETORES.map((time) => (
+                                <SelectItem key={time} value={time}>
+                                    {time}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                </div>
+
+                <div className="space-y-2">
+                    <Label htmlFor="selectCentroCusto" className="flex items-center gap-2">
+                        <DollarSign className="h-4 w-4 text-emerald-600" />
+                        Centro de Custo:
+                    </Label>
+                    <Select value={formData.centroCusto} onValueChange={(value) => handleInputChange("centroCusto", value)}>
+                        <SelectTrigger id="selectCentroCusto" className="w-full">
+                            <SelectValue placeholder="Selecione" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {CENTROS_CUSTO.map((centro) => (
+                                <SelectItem key={centro} value={centro}>
+                                    {centro}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                </div>
+            </div>
+
             <div className="space-y-2">
-                <Label htmlFor="selectTimeSetor" className="flex items-center gap-2">
-                    <Users className="h-4 w-4 text-emerald-600" />
-                    Time/Setor:
+                <Label htmlFor="selectDia" className="flex items-center gap-2">
+                    <Calendar className="h-4 w-4 text-emerald-600" />
+                    Dia:
                 </Label>
-                <Select value={formData.timeSetor} onValueChange={(value) => handleInputChange("timeSetor", value)} required>
-                    <SelectTrigger id="selectTimeSetor" className="w-full">
+                <Select value={formData.dia} onValueChange={(value) => handleInputChange("dia", value)}>
+                    <SelectTrigger id="selectDia" className="w-full">
                         <SelectValue placeholder="Selecione" />
                     </SelectTrigger>
                     <SelectContent>
-                        {TIMES_SETORES.map((time) => (
-                            <SelectItem key={time} value={time}>
-                                {time}
-                            </SelectItem>
-                        ))}
+                        <SelectItem value="Feriado">Feriado</SelectItem>
+                        <SelectItem value="Sabado">Sábado</SelectItem>
+                        <SelectItem value="Domingo">Domingo</SelectItem>
                     </SelectContent>
                 </Select>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                    <Label htmlFor="selectTurno" className="flex items-center gap-2">
-                        <Clock className="h-4 w-4 text-emerald-600" />
-                        Turno:
+                    <Label htmlFor="dataInicio" className="flex items-center gap-2">
+                        <Calendar className="h-4 w-4 text-emerald-600" />
+                        Data Início:
                     </Label>
-                    <Select value={formData.turno} onValueChange={(value) => handleInputChange("turno", value)} required>
-                        <SelectTrigger id="selectTurno" className="w-full">
-                            <SelectValue placeholder="Selecione" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="B">B</SelectItem>
-                        </SelectContent>
-                    </Select>
+                    <DatePicker date={formData.dataInicio} onChange={(date) => handleDataChange("dataInicio", date)} />
                 </div>
 
                 <div className="space-y-2">
-                    <Label htmlFor="selectRefeitorio" className="flex items-center gap-2">
-                        <Building className="h-4 w-4 text-emerald-600" />
-                        Refeitório:
+                    <Label htmlFor="dataFim" className="flex items-center gap-2">
+                        <Calendar className="h-4 w-4 text-emerald-600" />
+                        Data Fim:
                     </Label>
-                    <Select value={formData.refeitorio} onValueChange={(value) => handleInputChange("refeitorio", value)} required>
-                        <SelectTrigger id="selectRefeitorio" className="w-full">
-                            <SelectValue placeholder="Selecione" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="Fazenda">Fazenda</SelectItem>
-                            <SelectItem value="Industria">Indústria</SelectItem>
-                        </SelectContent>
-                    </Select>
+                    <DatePicker date={formData.dataFim} onChange={(date) => handleDataChange("dataFim", date)} />
                 </div>
             </div>
 
-            <div className="space-y-2">
-                <Label htmlFor="data" className="flex items-center gap-2">
-                    <Calendar className="h-4 w-4 text-emerald-600" />
-                    Data:
-                </Label>
-                <DatePicker date={formData.data} onChange={handleDataChange} />
-            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                    <Label htmlFor="quantidadeTiangua" className="flex items-center gap-2">
+                        <MapPin className="h-4 w-4 text-emerald-600" />
+                        Quantidade de Pessoas Tianguá:
+                    </Label>
+                    <Input
+                        type="number"
+                        id="quantidadeTiangua"
+                        value={formData.quantidadeTiangua}
+                        onChange={(e) => handleInputChange("quantidadeTiangua", e.target.value)}
+                        min="0"
+                        className="w-full"
+                        placeholder="Número de pessoas"
+                    />
+                </div>
 
-            <div className="space-y-2">
-                <Label htmlFor="refeicoes" className="flex items-center gap-2">
-                    <Coffee className="h-4 w-4 text-emerald-600" />
-                    Refeições:
-                </Label>
-                <Input
-                    id="refeicoes"
-                    value={formData.refeicoes}
-                    disabled
-                    className="w-full bg-gray-100"
-                    placeholder="Jantar e Ceia"
-                />
+                <div className="space-y-2">
+                    <Label htmlFor="quantidadeUbajara" className="flex items-center gap-2">
+                        <MapPin className="h-4 w-4 text-emerald-600" />
+                        Quantidade de Pessoas Ubajara:
+                    </Label>
+                    <Input
+                        type="number"
+                        id="quantidadeUbajara"
+                        value={formData.quantidadeUbajara}
+                        onChange={(e) => handleInputChange("quantidadeUbajara", e.target.value)}
+                        min="0"
+                        className="w-full"
+                        placeholder="Número de pessoas"
+                    />
+                </div>
             </div>
 
             <div className="space-y-2">

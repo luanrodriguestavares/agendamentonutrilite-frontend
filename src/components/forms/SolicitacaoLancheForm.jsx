@@ -43,10 +43,39 @@ const SolicitacaoLancheForm = ({ dados, onChange, onError }) => {
         const agora = new Date()
         const hoje = new Date()
         hoje.setHours(0, 0, 0, 0)
-        const amanha = new Date(hoje)
-        amanha.setDate(amanha.getDate() + 1)
+        const dataAgendamento = new Date(date)
+        dataAgendamento.setHours(0, 0, 0, 0)
 
-        if (date.getTime() === hoje.getTime()) {
+        const diaSemanaAgendamento = dataAgendamento.getDay()
+        const ehFimDeSemana = diaSemanaAgendamento === 0 || diaSemanaAgendamento === 6
+
+        if (ehFimDeSemana) {
+            // Calcula o próximo sábado
+            const proximoSabado = new Date(hoje)
+            proximoSabado.setDate(hoje.getDate() + (6 - hoje.getDay()))
+
+            // Calcula o próximo domingo
+            const proximoDomingo = new Date(proximoSabado)
+            proximoDomingo.setDate(proximoSabado.getDate() + 1)
+
+            // Verifica se a data selecionada é o próximo fim de semana
+            const ehProximoFimDeSemana =
+                dataAgendamento.getTime() === proximoSabado.getTime() ||
+                dataAgendamento.getTime() === proximoDomingo.getTime()
+
+            if (ehProximoFimDeSemana && agora.getDay() === 5) {
+                const limite = new Date()
+                limite.setHours(9, 0, 0, 0)
+
+                if (agora > limite) {
+                    onError(
+                        "Horário limite excedido",
+                        "Agendamentos para o próximo fim de semana devem ser feitos até às 09:00h da sexta-feira."
+                    )
+                    return false
+                }
+            }
+        } else if (dataAgendamento.getTime() === hoje.getTime()) {
             const limite = new Date(hoje)
             limite.setHours(9, 0, 0, 0)
 

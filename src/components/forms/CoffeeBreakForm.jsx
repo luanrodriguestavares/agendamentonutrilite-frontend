@@ -31,7 +31,7 @@ const CoffeeBreakForm = ({ dados, onChange, onError }) => {
             setFormData((prev) => ({
                 ...prev,
                 [field]: value,
-                data: null,
+                dataCoffee: null,
             }))
             return
         }
@@ -50,32 +50,24 @@ const CoffeeBreakForm = ({ dados, onChange, onError }) => {
         const dataAgendamento = new Date(date)
         dataAgendamento.setHours(0, 0, 0, 0)
 
-        // Calcula a diferença em dias
         const diffTime = dataAgendamento.getTime() - hoje.getTime()
         const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
 
-        // Verifica se a data é para hoje
         if (diffDays === 0) {
-            const limite = new Date()
-            limite.setHours(9, 0, 0, 0)
-
-            if (agora > limite) {
-                onError(
-                    "Horário limite excedido",
-                    "O horário limite para agendamento de coffee break no mesmo dia é até 09:00h."
-                )
-                return false
-            }
+            onError(
+                "Data inválida",
+                "Não é possível agendar coffee break para o mesmo dia. O agendamento deve ser feito até às 12:00h do dia anterior."
+            )
+            return false
         }
-        // Verifica se a data é para amanhã
         else if (diffDays === 1) {
             const limite = new Date()
-            limite.setHours(15, 0, 0, 0)
+            limite.setHours(12, 0, 0, 0)
 
             if (agora > limite) {
                 onError(
                     "Horário limite excedido",
-                    "O horário limite para agendamento de coffee break para o dia seguinte é até 15:00h do dia anterior."
+                    "O horário limite para agendamento de coffee break é até 12:00h do dia anterior."
                 )
                 return false
             }
@@ -104,7 +96,10 @@ const CoffeeBreakForm = ({ dados, onChange, onError }) => {
             return
         }
 
-        setFormData((prev) => ({ ...prev, data: date }))
+        setFormData((prev) => ({
+            ...prev,
+            dataCoffee: date
+        }))
     }
 
     const cardapios = ["Coffe Tipo 01", "Coffe Tipo 02", "Coffe Tipo 03", "Coffe Tipo 04", "Coffe Tipo 05"]
@@ -229,11 +224,11 @@ const CoffeeBreakForm = ({ dados, onChange, onError }) => {
             )}
 
             <div className="space-y-2">
-                <Label htmlFor="data" className="flex items-center gap-2">
+                <Label htmlFor="dataCoffee" className="flex items-center gap-2">
                     <Calendar className="h-4 w-4 text-emerald-600" />
                     Data:
                 </Label>
-                <DatePicker date={formData.data} onChange={handleDataChange} />
+                <DatePicker date={formData.dataCoffee} onChange={handleDataChange} />
             </div>
 
             <div className="space-y-2">

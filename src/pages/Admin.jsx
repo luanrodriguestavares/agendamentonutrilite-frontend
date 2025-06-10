@@ -64,20 +64,14 @@ export default function Admin() {
         }
     }
 
+    const adjustDate = (dateString) => {
+        if (!dateString) return null
+        const date = new Date(dateString)
+        return new Date(date.getTime() + date.getTimezoneOffset() * 60000)
+    }
+
     const getAgendamentoDate = (agendamento) => {
         try {
-            const adjustDate = (dateString) => {
-                if (!dateString) return null
-                const date = new Date(dateString)
-
-                // Ajusta o fuso horário para considerar UTC
-                const userTimezoneOffset = date.getTimezoneOffset() * 60000
-                const adjustedDate = new Date(date.getTime() + userTimezoneOffset)
-                adjustedDate.setHours(0, 0, 0, 0)
-
-                return format(adjustedDate, "dd 'de' MMMM 'de' yyyy", { locale: ptBR })
-            }
-
             switch (agendamento.tipoAgendamento) {
                 case "Home Office":
                     if (agendamento.dataInicio) {
@@ -210,14 +204,15 @@ export default function Admin() {
             await cancelAgendamento(selectedAgendamentoForCancel.id, {
                 tipo: selectedAgendamentoForCancel.tipoAgendamento,
                 motivo: cancelReason,
-                origem: "admin"
+                origem: "admin",
             })
             await loadAgendamentos()
             setCancelModalOpen(false)
             setCancelReason("")
             setSelectedAgendamentoForCancel(null)
         } catch (error) {
-            setErrorMessage("Erro ao cancelar agendamento")
+            setErrorTitle("Erro ao cancelar agendamento")
+            setErrorMessage(error.response?.data?.details || error.response?.data?.error || "Erro ao cancelar agendamento")
             setErrorModalOpen(true)
         } finally {
             setLoadingAction(null)
@@ -324,16 +319,14 @@ export default function Admin() {
 
     const getAgendamentoDisplayDate = (agendamento) => {
         try {
-            const adjustDate = (dateString) => {
-                if (!dateString) return null
-                const date = new Date(dateString)
-                return format(date, "dd 'de' MMMM 'de' yyyy", { locale: ptBR })
-            }
-
             switch (agendamento.tipoAgendamento) {
                 case "Home Office":
-                    const dataInicio = adjustDate(agendamento.dataInicio)
-                    const dataFim = adjustDate(agendamento.dataFim)
+                    const dataInicio = agendamento.dataInicio
+                        ? format(adjustDate(agendamento.dataInicio), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })
+                        : null
+                    const dataFim = agendamento.dataFim
+                        ? format(adjustDate(agendamento.dataFim), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })
+                        : null
 
                     if (dataInicio && dataFim) {
                         if (dataInicio === dataFim) {
@@ -346,30 +339,34 @@ export default function Admin() {
                     break
                 case "Agendamento para Time":
                     if (agendamento.dataFeriado) {
-                        return adjustDate(agendamento.dataFeriado)
+                        return format(adjustDate(agendamento.dataFeriado), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })
                     }
                     if (agendamento.dataInicio) {
-                        return adjustDate(agendamento.dataInicio)
+                        return format(adjustDate(agendamento.dataInicio), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })
                     }
                     break
                 case "Administrativo - Lanche":
                     if (agendamento.data) {
-                        return adjustDate(agendamento.data)
+                        return format(adjustDate(agendamento.data), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })
                     }
                     break
                 case "Agendamento para Visitante":
                     if (agendamento.data) {
-                        return adjustDate(agendamento.data)
+                        return format(adjustDate(agendamento.data), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })
                     }
                     break
                 case "Coffee Break":
                     if (agendamento.dataCoffee) {
-                        return adjustDate(agendamento.dataCoffee)
+                        return format(adjustDate(agendamento.dataCoffee), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })
                     }
                     break
                 case "Rota Extra":
-                    const rotaInicio = adjustDate(agendamento.dataInicio)
-                    const rotaFim = adjustDate(agendamento.dataFim)
+                    const rotaInicio = agendamento.dataInicio
+                        ? format(adjustDate(agendamento.dataInicio), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })
+                        : null
+                    const rotaFim = agendamento.dataFim
+                        ? format(adjustDate(agendamento.dataFim), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })
+                        : null
 
                     if (rotaInicio && rotaFim) {
                         if (rotaInicio === rotaFim) {
@@ -382,7 +379,7 @@ export default function Admin() {
                     break
             }
 
-            return format(new Date(agendamento.createdAt), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })
+            return format(adjustDate(agendamento.createdAt), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })
         } catch (error) {
             console.error("Error formatting date:", error)
             return "Data não disponível"
@@ -496,25 +493,19 @@ export default function Admin() {
                                     {agendamento.quantidadeAlmocoLanche > 0 && (
                                         <div className="flex items-center gap-2">
                                             <Utensils className={`h-4 w-4 text-${tipoColor}-600`} />
-                                            <span className="text-sm">
-                                                {agendamento.quantidadeAlmocoLanche} pessoas (Almoço/Lanche)
-                                            </span>
+                                            <span className="text-sm">{agendamento.quantidadeAlmocoLanche} pessoas (Almoço/Lanche)</span>
                                         </div>
                                     )}
                                     {agendamento.quantidadeJantarCeia > 0 && (
                                         <div className="flex items-center gap-2">
                                             <Utensils className={`h-4 w-4 text-${tipoColor}-600`} />
-                                            <span className="text-sm">
-                                                {agendamento.quantidadeJantarCeia} pessoas (Jantar/Ceia)
-                                            </span>
+                                            <span className="text-sm">{agendamento.quantidadeJantarCeia} pessoas (Jantar/Ceia)</span>
                                         </div>
                                     )}
                                     {agendamento.quantidadeLancheExtra > 0 && (
                                         <div className="flex items-center gap-2">
                                             <Coffee className={`h-4 w-4 text-${tipoColor}-600`} />
-                                            <span className="text-sm">
-                                                {agendamento.quantidadeLancheExtra} pessoas (Lanche Extra)
-                                            </span>
+                                            <span className="text-sm">{agendamento.quantidadeLancheExtra} pessoas (Lanche Extra)</span>
                                         </div>
                                     )}
                                 </div>
@@ -1114,10 +1105,7 @@ export default function Admin() {
                         >
                             Cancelar
                         </Button>
-                        <Button
-                            onClick={handleCancelConfirm}
-                            className="bg-red-600 hover:bg-red-700"
-                        >
+                        <Button onClick={handleCancelConfirm} className="bg-red-600 hover:bg-red-700">
                             Confirmar Cancelamento
                         </Button>
                     </DialogFooter>
