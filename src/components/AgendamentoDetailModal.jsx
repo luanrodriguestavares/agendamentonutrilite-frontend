@@ -11,7 +11,12 @@ export default function AgendamentoDetailModal({ agendamento, isOpen, onClose })
 	const adjustDate = (dateString) => {
 		if (!dateString) return null
 		const date = new Date(dateString)
-		return date
+
+		const userTimezoneOffset = date.getTimezoneOffset() * 60000
+		const adjustedDate = new Date(date.getTime() + userTimezoneOffset)
+		adjustedDate.setHours(0, 0, 0, 0)
+
+		return adjustedDate
 	}
 
 	const getStatusBadge = (status) => {
@@ -856,15 +861,6 @@ export default function AgendamentoDetailModal({ agendamento, isOpen, onClose })
 								</h3>
 								<div className="bg-red-50 border border-red-200 p-4 rounded-lg">
 									<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-										{agendamento.canceladoPor && (
-											<div className="flex items-center gap-3">
-												<User className="h-4 w-4 text-red-600" />
-												<div>
-													<span className="text-xs text-red-600 uppercase tracking-wide">Cancelado por</span>
-													<p className="font-medium">{agendamento.canceladoPor}</p>
-												</div>
-											</div>
-										)}
 										{agendamento.motivoCancelamento && (
 											<div className="flex items-center gap-3">
 												<FileText className="h-4 w-4 text-red-600" />

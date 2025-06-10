@@ -23,11 +23,52 @@ const SolicitacaoLancheForm = ({ dados, onChange, onError }) => {
     }, [formData, onChange])
 
     const handleInputChange = (field, value) => {
+        if (field === "turno") {
+            setFormData((prev) => ({
+                ...prev,
+                [field]: value,
+                data: null,
+            }))
+            return
+        }
         setFormData((prev) => ({ ...prev, [field]: value }))
+    }
+
+    const validarHorarioAgendamento = (date) => {
+        if (!formData.turno) {
+            onError("Turno não selecionado", "Por favor, selecione o turno antes de escolher a data.")
+            return false
+        }
+
+        const agora = new Date()
+        const hoje = new Date()
+        hoje.setHours(0, 0, 0, 0)
+        const amanha = new Date(hoje)
+        amanha.setDate(amanha.getDate() + 1)
+
+        if (date.getTime() === hoje.getTime()) {
+            const limite = new Date(hoje)
+            limite.setHours(9, 0, 0, 0)
+
+            if (agora > limite) {
+                onError(
+                    "Horário limite excedido",
+                    "O horário limite para agendamento de lanche no mesmo dia é até 09:00h."
+                )
+                return false
+            }
+        }
+
+        return true
     }
 
     const handleDataChange = (date) => {
         if (!date) return
+
+        if (!formData.turno) {
+            onError("Turno não selecionado", "Por favor, selecione o turno antes de escolher a data.")
+            return
+        }
 
         const hoje = new Date()
         hoje.setHours(0, 0, 0, 0)
@@ -37,11 +78,7 @@ const SolicitacaoLancheForm = ({ dados, onChange, onError }) => {
             return
         }
 
-        const dadosValidacao = { ...formData, data: date }
-        const resultado = validarSolicitacaoLanche(dadosValidacao)
-
-        if (!resultado.permitido) {
-            onError("Horário limite excedido", resultado.mensagem)
+        if (!validarHorarioAgendamento(date)) {
             return
         }
 
@@ -55,7 +92,7 @@ const SolicitacaoLancheForm = ({ dados, onChange, onError }) => {
                     <Users className="h-4 w-4 text-emerald-600" />
                     Time/Setor:
                 </Label>
-                <Select value={formData.timeSetor} onValueChange={(value) => handleInputChange("timeSetor", value)}>
+                <Select value={formData.timeSetor} onValueChange={(value) => handleInputChange("timeSetor", value)} required>
                     <SelectTrigger id="selectTimeSetor" className="w-full">
                         <SelectValue placeholder="Selecione" />
                     </SelectTrigger>
@@ -69,21 +106,13 @@ const SolicitacaoLancheForm = ({ dados, onChange, onError }) => {
                 </Select>
             </div>
 
-            <div className="space-y-2">
-                <Label htmlFor="data" className="flex items-center gap-2">
-                    <Calendar className="h-4 w-4 text-emerald-600" />
-                    Data:
-                </Label>
-                <DatePicker date={formData.data} onChange={handleDataChange} />
-            </div>
-
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
                     <Label htmlFor="selectTurno" className="flex items-center gap-2">
                         <Clock className="h-4 w-4 text-emerald-600" />
                         Turno:
                     </Label>
-                    <Select value={formData.turno} onValueChange={(value) => handleInputChange("turno", value)}>
+                    <Select value={formData.turno} onValueChange={(value) => handleInputChange("turno", value)} required>
                         <SelectTrigger id="selectTurno" className="w-full">
                             <SelectValue placeholder="Selecione" />
                         </SelectTrigger>
@@ -99,7 +128,7 @@ const SolicitacaoLancheForm = ({ dados, onChange, onError }) => {
                         <Building className="h-4 w-4 text-emerald-600" />
                         Refeitório:
                     </Label>
-                    <Select value={formData.refeitorio} onValueChange={(value) => handleInputChange("refeitorio", value)}>
+                    <Select value={formData.refeitorio} onValueChange={(value) => handleInputChange("refeitorio", value)} required>
                         <SelectTrigger id="selectRefeitorio" className="w-full">
                             <SelectValue placeholder="Selecione" />
                         </SelectTrigger>
@@ -109,6 +138,14 @@ const SolicitacaoLancheForm = ({ dados, onChange, onError }) => {
                         </SelectContent>
                     </Select>
                 </div>
+            </div>
+
+            <div className="space-y-2">
+                <Label htmlFor="data" className="flex items-center gap-2">
+                    <Calendar className="h-4 w-4 text-emerald-600" />
+                    Data:
+                </Label>
+                <DatePicker date={formData.data} onChange={handleDataChange} />
             </div>
 
             <div className="space-y-2">

@@ -26,7 +26,8 @@ export default function CancelarAgendamento() {
                 if (error.response?.status === 404) {
                     setMessage('Agendamento não encontrado');
                 } else if (error.response?.data?.error) {
-                    setMessage(error.response.data.error);
+                    const errorData = error.response.data;
+                    setMessage(errorData.details || errorData.error);
                 } else {
                     setMessage('Erro ao cancelar agendamento');
                 }

@@ -4,7 +4,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { DatePicker } from "@/components/ui/date-picker"
-import { Calendar, Building, Users, User, DollarSign, FileText } from "lucide-react"
+import { Calendar, Building, Users, User, DollarSign, FileText, Clock, Coffee } from "lucide-react"
 import { CENTROS_CUSTO } from "../../utils/validacoes-agendamento"
 
 const AgendamentoVisitanteForm = ({ dados, onChange, onError }) => {
@@ -15,6 +15,7 @@ const AgendamentoVisitanteForm = ({ dados, onChange, onError }) => {
         acompanhante: "",
         centroCusto: "",
         observacao: "",
+        turno: "",
         ...dados,
     })
 
@@ -23,11 +24,52 @@ const AgendamentoVisitanteForm = ({ dados, onChange, onError }) => {
     }, [formData, onChange])
 
     const handleInputChange = (field, value) => {
+        if (field === "turno") {
+            setFormData((prev) => ({
+                ...prev,
+                [field]: value,
+                data: null,
+            }))
+            return
+        }
         setFormData((prev) => ({ ...prev, [field]: value }))
+    }
+
+    const validarHorarioAgendamento = (date) => {
+        if (!formData.turno) {
+            onError("Turno não selecionado", "Por favor, selecione o turno antes de escolher a data.")
+            return false
+        }
+
+        const agora = new Date()
+        const hoje = new Date()
+        hoje.setHours(0, 0, 0, 0)
+        const amanha = new Date(hoje)
+        amanha.setDate(amanha.getDate() + 1)
+
+        if (date.getTime() === hoje.getTime()) {
+            const limite = new Date(hoje)
+            limite.setHours(7, 30, 0, 0)
+
+            if (agora > limite) {
+                onError(
+                    "Horário limite excedido",
+                    "O horário limite para agendamento de visitante no mesmo dia é até 07:30h."
+                )
+                return false
+            }
+        }
+
+        return true
     }
 
     const handleDataChange = (date) => {
         if (!date) return
+
+        if (!formData.turno) {
+            onError("Turno não selecionado", "Por favor, selecione o turno antes de escolher a data.")
+            return
+        }
 
         const hoje = new Date()
         hoje.setHours(0, 0, 0, 0)
@@ -37,18 +79,8 @@ const AgendamentoVisitanteForm = ({ dados, onChange, onError }) => {
             return
         }
 
-        if (date.toDateString() === hoje.toDateString()) {
-            const agora = new Date()
-            const limite = new Date(agora)
-            limite.setHours(7, 30, 0, 0)
-
-            if (agora > limite) {
-                onError(
-                    "Horário limite excedido",
-                    "Se o agendamento for realizado no mesmo dia da visita, ele só poderá ser feito até às 7h30 da manhã. Por favor, entre em contato com servicosnutriliteagendamento@gmail.com.",
-                )
-                return
-            }
+        if (!validarHorarioAgendamento(date)) {
+            return
         }
 
         setFormData((prev) => ({ ...prev, data: date }))
@@ -57,20 +89,43 @@ const AgendamentoVisitanteForm = ({ dados, onChange, onError }) => {
     return (
         <div className="space-y-6 animate-in fade-in-50 duration-300">
             <div className="space-y-2">
-                <Label htmlFor="data" className="flex items-center gap-2">
-                    <Calendar className="h-4 w-4 text-emerald-600" />
-                    Data da visita:
+                <Label htmlFor="nomeVisitante" className="flex items-center gap-2">
+                    <User className="h-4 w-4 text-emerald-600" />
+                    Nome do Visitante:
                 </Label>
-                <DatePicker date={formData.data} onChange={handleDataChange} />
+                <Input
+                    id="nomeVisitante"
+                    value={formData.nomeVisitante}
+                    onChange={(e) => handleInputChange("nomeVisitante", e.target.value)}
+                    className="w-full"
+                    placeholder="Digite o nome do visitante"
+                    required
+                />
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                    <Label htmlFor="selectTurno" className="flex items-center gap-2">
+                        <Clock className="h-4 w-4 text-emerald-600" />
+                        Turno:
+                    </Label>
+                    <Select value={formData.turno} onValueChange={(value) => handleInputChange("turno", value)} required>
+                        <SelectTrigger id="selectTurno" className="w-full">
+                            <SelectValue placeholder="Selecione" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="A">A</SelectItem>
+                            <SelectItem value="ADM">ADM</SelectItem>
+                        </SelectContent>
+                    </Select>
+                </div>
+
                 <div className="space-y-2">
                     <Label htmlFor="selectRefeitorio" className="flex items-center gap-2">
                         <Building className="h-4 w-4 text-emerald-600" />
                         Refeitório:
                     </Label>
-                    <Select value={formData.refeitorio} onValueChange={(value) => handleInputChange("refeitorio", value)}>
+                    <Select value={formData.refeitorio} onValueChange={(value) => handleInputChange("refeitorio", value)} required>
                         <SelectTrigger id="selectRefeitorio" className="w-full">
                             <SelectValue placeholder="Selecione" />
                         </SelectTrigger>
@@ -80,56 +135,28 @@ const AgendamentoVisitanteForm = ({ dados, onChange, onError }) => {
                         </SelectContent>
                     </Select>
                 </div>
-
-                <div className="space-y-2">
-                    <Label htmlFor="quantidadeVisitantes" className="flex items-center gap-2">
-                        <Users className="h-4 w-4 text-emerald-600" />
-                        Quantidades de Visitantes:
-                    </Label>
-                    <Input
-                        type="number"
-                        id="quantidadeVisitantes"
-                        value={formData.quantidadeVisitantes}
-                        onChange={(e) => handleInputChange("quantidadeVisitantes", e.target.value)}
-                        min="0"
-                        className="w-full"
-                        placeholder="Número de visitantes"
-                    />
-                </div>
             </div>
 
             <div className="space-y-2">
-                <Label htmlFor="acompanhante" className="flex items-center gap-2">
-                    <User className="h-4 w-4 text-emerald-600" />
-                    Quem irá acompanhar?
+                <Label htmlFor="data" className="flex items-center gap-2">
+                    <Calendar className="h-4 w-4 text-emerald-600" />
+                    Data:
+                </Label>
+                <DatePicker date={formData.data} onChange={handleDataChange} />
+            </div>
+
+            <div className="space-y-2">
+                <Label htmlFor="refeicoes" className="flex items-center gap-2">
+                    <Coffee className="h-4 w-4 text-emerald-600" />
+                    Refeições:
                 </Label>
                 <Input
-                    type="text"
-                    id="acompanhante"
-                    value={formData.acompanhante}
-                    onChange={(e) => handleInputChange("acompanhante", e.target.value)}
-                    className="w-full"
-                    placeholder="Nome do acompanhante"
+                    id="refeicoes"
+                    value={formData.refeicoes}
+                    disabled
+                    className="w-full bg-gray-100"
+                    placeholder="Almoço"
                 />
-            </div>
-
-            <div className="space-y-2">
-                <Label htmlFor="selectCentroCusto" className="flex items-center gap-2">
-                    <DollarSign className="h-4 w-4 text-emerald-600" />
-                    Centro de Custo:
-                </Label>
-                <Select value={formData.centroCusto} onValueChange={(value) => handleInputChange("centroCusto", value)}>
-                    <SelectTrigger id="selectCentroCusto" className="w-full">
-                        <SelectValue placeholder="Selecione" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        {CENTROS_CUSTO.map((centro) => (
-                            <SelectItem key={centro} value={centro}>
-                                {centro}
-                            </SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
             </div>
 
             <div className="space-y-2">
@@ -143,7 +170,7 @@ const AgendamentoVisitanteForm = ({ dados, onChange, onError }) => {
                     onChange={(e) => handleInputChange("observacao", e.target.value)}
                     rows={3}
                     className="w-full resize-none"
-                    placeholder="Informações adicionais sobre a visita..."
+                    placeholder="Informações adicionais sobre o visitante..."
                 />
             </div>
         </div>

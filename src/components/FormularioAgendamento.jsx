@@ -254,7 +254,7 @@ const FormularioAgendamento = ({ formData, setFormData, onSubmit }) => {
 							value={formData.email}
 							onChange={handleInputChange}
 							className="w-full"
-							placeholder="exemplo@nutrilite.com"
+							placeholder="nome@email.com"
 							required
 						/>
 					</div>

@@ -41,14 +41,15 @@ export const CENTROS_CUSTO = [
 
 // Times/Setores disponíveis
 export const TIMES_SETORES = [
-    "Agro/Pesquisa",
-    "Segurança e Meio Ambiente",
-    "RH/TI/Ambulatório",
-    "Logística",
-    "Qualidade/Opex",
-    "Manutenção/Engenharia",
-    "Extração/DM e Spray Dryer",
-    "Utilidades",
+    "Agro",
+    "Manufatura",
+    "Manutenção",
+    "Engenharia",
+    "Opex",
+    "Logistica",
+    "Qualidade",
+    "RH",
+    "Pesquisa",
 ]
 
 /**

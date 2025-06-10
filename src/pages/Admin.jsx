@@ -66,57 +66,69 @@ export default function Admin() {
 
     const getAgendamentoDate = (agendamento) => {
         try {
+            const adjustDate = (dateString) => {
+                if (!dateString) return null
+                const date = new Date(dateString)
+
+                // Ajusta o fuso horário para considerar UTC
+                const userTimezoneOffset = date.getTimezoneOffset() * 60000
+                const adjustedDate = new Date(date.getTime() + userTimezoneOffset)
+                adjustedDate.setHours(0, 0, 0, 0)
+
+                return format(adjustedDate, "dd 'de' MMMM 'de' yyyy", { locale: ptBR })
+            }
+
             switch (agendamento.tipoAgendamento) {
                 case "Home Office":
                     if (agendamento.dataInicio) {
-                        const date = new Date(agendamento.dataInicio)
-                        if (!isNaN(date.getTime())) return date
+                        const date = adjustDate(agendamento.dataInicio)
+                        if (date && !isNaN(date.getTime())) return date
                     }
                     if (agendamento.dataFim) {
-                        const date = new Date(agendamento.dataFim)
-                        if (!isNaN(date.getTime())) return date
+                        const date = adjustDate(agendamento.dataFim)
+                        if (date && !isNaN(date.getTime())) return date
                     }
                     break
                 case "Agendamento para Time":
                     if (agendamento.dataFeriado) {
-                        const date = new Date(agendamento.dataFeriado)
-                        if (!isNaN(date.getTime())) return date
+                        const date = adjustDate(agendamento.dataFeriado)
+                        if (date && !isNaN(date.getTime())) return date
                     }
                     if (agendamento.dataInicio) {
-                        const date = new Date(agendamento.dataInicio)
-                        if (!isNaN(date.getTime())) return date
+                        const date = adjustDate(agendamento.dataInicio)
+                        if (date && !isNaN(date.getTime())) return date
                     }
                     break
                 case "Administrativo - Lanche":
                     if (agendamento.data) {
-                        const date = new Date(agendamento.data)
-                        if (!isNaN(date.getTime())) return date
+                        const date = adjustDate(agendamento.data)
+                        if (date && !isNaN(date.getTime())) return date
                     }
                     break
                 case "Agendamento para Visitante":
                     if (agendamento.data) {
-                        const date = new Date(agendamento.data)
-                        if (!isNaN(date.getTime())) return date
+                        const date = adjustDate(agendamento.data)
+                        if (date && !isNaN(date.getTime())) return date
                     }
                     break
                 case "Coffee Break":
                     if (agendamento.dataCoffee) {
-                        const date = new Date(agendamento.dataCoffee)
-                        if (!isNaN(date.getTime())) return date
+                        const date = adjustDate(agendamento.dataCoffee)
+                        if (date && !isNaN(date.getTime())) return date
                     }
                     break
                 case "Rota Extra":
                     if (agendamento.dataInicio) {
-                        const date = new Date(agendamento.dataInicio)
-                        if (!isNaN(date.getTime())) return date
+                        const date = adjustDate(agendamento.dataInicio)
+                        if (date && !isNaN(date.getTime())) return date
                     }
                     break
             }
 
             // Fallbacks gerais
             if (agendamento.createdAt) {
-                const date = new Date(agendamento.createdAt)
-                if (!isNaN(date.getTime())) return date
+                const date = adjustDate(agendamento.createdAt)
+                if (date && !isNaN(date.getTime())) return date
             }
             return new Date()
         } catch (error) {
@@ -437,11 +449,6 @@ export default function Admin() {
                 </CardHeader>
                 <CardContent className="p-4 pt-3 pb-16">{renderAgendamentoDetails(agendamento)}</CardContent>
                 <div className="absolute bottom-0 left-0 right-0 p-4 border-t bg-white flex justify-end items-center gap-2 rounded-b-lg">
-                    {isCanceled && (
-                        <Badge variant="outline" className="text-gray-500">
-                            Cancelado por: {agendamento.canceladoPor || "Solicitante"}
-                        </Badge>
-                    )}
                     {getStatusBadge(agendamento.status)}
                 </div>
             </Card>
@@ -1109,7 +1116,6 @@ export default function Admin() {
                         </Button>
                         <Button
                             onClick={handleCancelConfirm}
-                            disabled={!cancelReason.trim()}
                             className="bg-red-600 hover:bg-red-700"
                         >
                             Confirmar Cancelamento

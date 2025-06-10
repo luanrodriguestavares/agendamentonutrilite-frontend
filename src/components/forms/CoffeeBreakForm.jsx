@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { DatePicker } from "@/components/ui/date-picker"
 import { TimeInput } from "@/components/ui/time-input"
-import { Calendar, Clock, Coffee, Users, DollarSign, MapPin, FileText, AlertCircle } from "lucide-react"
+import { Calendar, Clock, Coffee, Users, DollarSign, MapPin, FileText, AlertCircle, Building } from "lucide-react"
 import { TIMES_SETORES, CENTROS_CUSTO, validarCoffeeBreak } from "../../utils/validacoes-agendamento"
 
 const CoffeeBreakForm = ({ dados, onChange, onError }) => {
@@ -27,51 +27,122 @@ const CoffeeBreakForm = ({ dados, onChange, onError }) => {
     }, [formData, onChange])
 
     const handleInputChange = (field, value) => {
+        if (field === "turno") {
+            setFormData((prev) => ({
+                ...prev,
+                [field]: value,
+                data: null,
+            }))
+            return
+        }
         setFormData((prev) => ({ ...prev, [field]: value }))
+    }
+
+    const validarHorarioAgendamento = (date) => {
+        if (!formData.turno) {
+            onError("Turno não selecionado", "Por favor, selecione o turno antes de escolher a data.")
+            return false
+        }
+
+        const agora = new Date()
+        const hoje = new Date()
+        hoje.setHours(0, 0, 0, 0)
+        const dataAgendamento = new Date(date)
+        dataAgendamento.setHours(0, 0, 0, 0)
+
+        // Calcula a diferença em dias
+        const diffTime = dataAgendamento.getTime() - hoje.getTime()
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+
+        // Verifica se a data é para hoje
+        if (diffDays === 0) {
+            const limite = new Date()
+            limite.setHours(9, 0, 0, 0)
+
+            if (agora > limite) {
+                onError(
+                    "Horário limite excedido",
+                    "O horário limite para agendamento de coffee break no mesmo dia é até 09:00h."
+                )
+                return false
+            }
+        }
+        // Verifica se a data é para amanhã
+        else if (diffDays === 1) {
+            const limite = new Date()
+            limite.setHours(15, 0, 0, 0)
+
+            if (agora > limite) {
+                onError(
+                    "Horário limite excedido",
+                    "O horário limite para agendamento de coffee break para o dia seguinte é até 15:00h do dia anterior."
+                )
+                return false
+            }
+        }
+
+        return true
     }
 
     const handleDataChange = (date) => {
         if (!date) return
 
+        if (!formData.turno) {
+            onError("Turno não selecionado", "Por favor, selecione o turno antes de escolher a data.")
+            return
+        }
+
         const hoje = new Date()
         hoje.setHours(0, 0, 0, 0)
 
-        if (date <= hoje) {
-            onError("Data inválida", "O Coffee Break deve ser agendado com pelo menos 1 dia de antecedência.")
+        if (date < hoje) {
+            onError("Data inválida", "A data não pode ser anterior à data atual.")
             return
         }
 
-        const dadosValidacao = { ...formData, dataCoffee: date }
-        const resultado = validarCoffeeBreak(dadosValidacao)
-
-        if (!resultado.permitido) {
-            onError("Horário limite excedido", resultado.mensagem)
+        if (!validarHorarioAgendamento(date)) {
             return
         }
 
-        setFormData((prev) => ({ ...prev, dataCoffee: date }))
+        setFormData((prev) => ({ ...prev, data: date }))
     }
 
     const cardapios = ["Coffe Tipo 01", "Coffe Tipo 02", "Coffe Tipo 03", "Coffe Tipo 04", "Coffe Tipo 05"]
 
     return (
         <div className="space-y-6 animate-in fade-in-50 duration-300">
+            <div className="space-y-2">
+                <Label htmlFor="selectTimeSetor" className="flex items-center gap-2">
+                    <Users className="h-4 w-4 text-emerald-600" />
+                    Time/Setor:
+                </Label>
+                <Select value={formData.timeSetor} onValueChange={(value) => handleInputChange("timeSetor", value)} required>
+                    <SelectTrigger id="selectTimeSetor" className="w-full">
+                        <SelectValue placeholder="Selecione" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        {TIMES_SETORES.map((time) => (
+                            <SelectItem key={time} value={time}>
+                                {time}
+                            </SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+            </div>
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                    <Label htmlFor="selectTimeSetor" className="flex items-center gap-2">
-                        <Users className="h-4 w-4 text-emerald-600" />
-                        Time/Setor:
+                    <Label htmlFor="selectTurno" className="flex items-center gap-2">
+                        <Clock className="h-4 w-4 text-emerald-600" />
+                        Turno:
                     </Label>
-                    <Select value={formData.timeSetor} onValueChange={(value) => handleInputChange("timeSetor", value)}>
-                        <SelectTrigger id="selectTimeSetor" className="w-full">
+                    <Select value={formData.turno} onValueChange={(value) => handleInputChange("turno", value)} required>
+                        <SelectTrigger id="selectTurno" className="w-full">
                             <SelectValue placeholder="Selecione" />
                         </SelectTrigger>
                         <SelectContent>
-                            {TIMES_SETORES.map((time) => (
-                                <SelectItem key={time} value={time}>
-                                    {time}
-                                </SelectItem>
-                            ))}
+                            <SelectItem value="A">A</SelectItem>
+                            <SelectItem value="ADM">ADM</SelectItem>
                         </SelectContent>
                     </Select>
                 </div>
@@ -81,7 +152,7 @@ const CoffeeBreakForm = ({ dados, onChange, onError }) => {
                         <Coffee className="h-4 w-4 text-emerald-600" />
                         Cardápio:
                     </Label>
-                    <Select value={formData.cardapio} onValueChange={(value) => handleInputChange("cardapio", value)}>
+                    <Select value={formData.cardapio} onValueChange={(value) => handleInputChange("cardapio", value)} required>
                         <SelectTrigger id="selectCardapio" className="w-full">
                             <SelectValue placeholder="Selecione" />
                         </SelectTrigger>
@@ -110,6 +181,7 @@ const CoffeeBreakForm = ({ dados, onChange, onError }) => {
                         min="0"
                         className="w-full"
                         placeholder="Número de pessoas"
+                        required
                     />
                 </div>
 
@@ -118,7 +190,7 @@ const CoffeeBreakForm = ({ dados, onChange, onError }) => {
                         <DollarSign className="h-4 w-4 text-emerald-600" />
                         Centro de Custo:
                     </Label>
-                    <Select value={formData.centroCusto} onValueChange={(value) => handleInputChange("centroCusto", value)}>
+                    <Select value={formData.centroCusto} onValueChange={(value) => handleInputChange("centroCusto", value)} required>
                         <SelectTrigger id="selectCentroCusto" className="w-full">
                             <SelectValue placeholder="Selecione" />
                         </SelectTrigger>
@@ -138,7 +210,7 @@ const CoffeeBreakForm = ({ dados, onChange, onError }) => {
                     <DollarSign className="h-4 w-4 text-emerald-600" />
                     Haverá rateio?
                 </Label>
-                <Select value={formData.rateio} onValueChange={(value) => handleInputChange("rateio", value)}>
+                <Select value={formData.rateio} onValueChange={(value) => handleInputChange("rateio", value)} required>
                     <SelectTrigger id="selectRateio" className="w-full">
                         <SelectValue placeholder="Selecione" />
                     </SelectTrigger>
@@ -156,27 +228,26 @@ const CoffeeBreakForm = ({ dados, onChange, onError }) => {
                 </p>
             )}
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                    <Label htmlFor="dataCoffee" className="flex items-center gap-2">
-                        <Calendar className="h-4 w-4 text-emerald-600" />
-                        Para quando?
-                    </Label>
-                    <DatePicker date={formData.dataCoffee} onChange={handleDataChange} />
-                </div>
+            <div className="space-y-2">
+                <Label htmlFor="data" className="flex items-center gap-2">
+                    <Calendar className="h-4 w-4 text-emerald-600" />
+                    Data:
+                </Label>
+                <DatePicker date={formData.data} onChange={handleDataChange} />
+            </div>
 
-                <div className="space-y-2">
-                    <Label htmlFor="horario" className="flex items-center gap-2">
-                        <Clock className="h-4 w-4 text-emerald-600" />
-                        Horário:
-                    </Label>
-                    <TimeInput
-                        id="horario"
-                        value={formData.horario}
-                        onChange={(value) => handleInputChange("horario", value)}
-                        className="w-full"
-                    />
-                </div>
+            <div className="space-y-2">
+                <Label htmlFor="refeicoes" className="flex items-center gap-2">
+                    <Coffee className="h-4 w-4 text-emerald-600" />
+                    Refeições:
+                </Label>
+                <Input
+                    id="refeicoes"
+                    value={formData.refeicoes}
+                    disabled
+                    className="w-full bg-gray-100"
+                    placeholder="Coffee Break"
+                />
             </div>
 
             <div className="space-y-2">
@@ -191,6 +262,7 @@ const CoffeeBreakForm = ({ dados, onChange, onError }) => {
                     onChange={(e) => handleInputChange("localEntrega", e.target.value)}
                     className="w-full"
                     placeholder="Informe o local de entrega"
+                    required
                 />
             </div>
 
