@@ -75,12 +75,10 @@ const AgendamentoTimeForm = ({ dados, onChange, onError }) => {
             const dataAtual = new Date(agora)
             const proximaSexta = new Date(dataAtual)
 
-            // Ajusta para a próxima sexta-feira
             while (proximaSexta.getDay() !== 5) {
                 proximaSexta.setDate(proximaSexta.getDate() + 1)
             }
 
-            // Define o início (sábado) e fim (domingo) do próximo fim de semana
             const inicioProximoFds = new Date(proximaSexta)
             inicioProximoFds.setDate(proximaSexta.getDate() + 1)
             inicioProximoFds.setHours(0, 0, 0, 0)
