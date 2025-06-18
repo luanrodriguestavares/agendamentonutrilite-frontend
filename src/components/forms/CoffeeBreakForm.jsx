@@ -223,12 +223,29 @@ const CoffeeBreakForm = ({ dados, onChange, onError }) => {
                 </p>
             )}
 
-            <div className="space-y-2">
-                <Label htmlFor="dataCoffee" className="flex items-center gap-2">
-                    <Calendar className="h-4 w-4 text-emerald-600" />
-                    Data:
-                </Label>
-                <DatePicker date={formData.dataCoffee} onChange={handleDataChange} />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                    <Label htmlFor="dataCoffee" className="flex items-center gap-2">
+                        <Calendar className="h-4 w-4 text-emerald-600" />
+                        Data:
+                    </Label>
+                    <DatePicker date={formData.dataCoffee} onChange={handleDataChange} />
+                </div>
+
+                <div className="space-y-2">
+                    <Label htmlFor="horario" className="flex items-center gap-2">
+                        <Clock className="h-4 w-4 text-emerald-600" />
+                        Horário:
+                    </Label>
+                    <TimeInput
+                        id="horario"
+                        value={formData.horario}
+                        onChange={(value) => handleInputChange("horario", value)}
+                        className="w-full"
+                        placeholder="00:00"
+                        required
+                    />
+                </div>
             </div>
 
             <div className="space-y-2">
