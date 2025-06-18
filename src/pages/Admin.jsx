@@ -760,7 +760,7 @@ export default function Admin() {
                             </div>
                         </div>
                         <div className="flex items-center gap-2">
-                            <Button
+                            {/**<Button
                                 variant="default"
                                 onClick={handleExportXLSX}
                                 disabled={exportLoading}
@@ -768,7 +768,7 @@ export default function Admin() {
                             >
                                 {exportLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sheet className="h-4 w-4" />}
                                 {exportLoading ? "Exportando Planilha..." : "Exportar Planilha"}
-                            </Button>
+                            </Button>**/}
                             <Button
                                 variant="outline"
                                 onClick={handleLogout}
