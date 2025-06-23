@@ -1,23 +1,25 @@
 import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
 import { useAuth } from "../contexts/AuthContext"
-import { getAgendamentos, updateAgendamento, cancelAgendamento, exportAgendamentosXLSX } from "../services/api"
+import { getAgendamentos, updateAgendamento, cancelAgendamento } from "../services/api"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Loader2, LogOut, Check, X, Calendar, Users, MapPin, Coffee, Building, Search, Filter, BarChart3, CheckCircle, XCircle, AlertCircle, FileText, ChevronLeft, ChevronRight, Grid3X3, List, Clock, Utensils, Bus, DollarSign, Sheet, User } from "lucide-react"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Loader2, LogOut, Check, X, Calendar, Filter, BarChart3, CheckCircle, XCircle, AlertCircle, ChevronLeft, ChevronRight, Download, Eye, Settings } from "lucide-react"
 import ErrorModal from "@/components/ErrorModal"
 import AgendamentoDetailModal from "@/components/AgendamentoDetailModal"
+import AdvancedFiltersModal from "@/components/AdvancedFiltersModal"
 import { format, isAfter, startOfDay } from "date-fns"
 import { ptBR } from "date-fns/locale"
 import { Label } from "@/components/ui/label"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { Textarea } from "@/components/ui/textarea"
+import * as XLSX from "xlsx"
 
-const ITEMS_PER_PAGE = 9
+const ITEMS_PER_PAGE = 20
 
 export default function Admin() {
     const navigate = useNavigate()
@@ -27,30 +29,53 @@ export default function Admin() {
     const [loading, setLoading] = useState(true)
     const [errorModalOpen, setErrorModalOpen] = useState(false)
     const [errorMessage, setErrorMessage] = useState("")
+    const [errorTitle, setErrorTitle] = useState("")
     const [searchTerm, setSearchTerm] = useState("")
-    const [tipoFilter, setTipoFilter] = useState("todos")
-    const [centroCustoFilter, setCentroCustoFilter] = useState("todos")
     const [selectedAgendamento, setSelectedAgendamento] = useState(null)
     const [detailModalOpen, setDetailModalOpen] = useState(false)
     const [currentPage, setCurrentPage] = useState(1)
     const [activeTab, setActiveTab] = useState("ativos")
-    const [viewMode, setViewMode] = useState("grid")
-    const [formData, setFormData] = useState({})
-    const [errorTitle, setErrorTitle] = useState("")
     const [loadingAction, setLoadingAction] = useState(null)
     const [cancelModalOpen, setCancelModalOpen] = useState(false)
     const [selectedAgendamentoForCancel, setSelectedAgendamentoForCancel] = useState(null)
     const [cancelReason, setCancelReason] = useState("")
-    const [exportLoading, setExportLoading] = useState(false)
+    const [advancedFiltersOpen, setAdvancedFiltersOpen] = useState(false)
+    const [sortConfig, setSortConfig] = useState({ key: "createdAt", direction: "desc" })
+
+    const [filters, setFilters] = useState({
+        nome: "",
+        email: "",
+        tipoAgendamento: "",
+        status: "",
+        tipoServico: "",
+        timeSetor: "",
+        centroCusto: "",
+        turno: "",
+        refeitorio: "",
+        cardapio: "",
+        dataInicio: null,
+        dataFim: null,
+        dataCoffee: null,
+        data: null,
+        quantidadeMin: "",
+        quantidadeMax: "",
+        localEntrega: "",
+        rateio: "",
+        acompanhante: "",
+        nomeVisitante: "",
+        dia: "",
+        isFeriado: "",
+        refeicoes: "",
+    })
 
     useEffect(() => {
         loadAgendamentos()
     }, [])
 
     useEffect(() => {
-        filterAgendamentos()
+        filterAndSortAgendamentos()
         setCurrentPage(1)
-    }, [agendamentos, searchTerm, tipoFilter, activeTab, centroCustoFilter])
+    }, [agendamentos, searchTerm, activeTab, filters, sortConfig])
 
     const loadAgendamentos = async () => {
         try {
@@ -78,10 +103,6 @@ export default function Admin() {
                         const date = adjustDate(agendamento.dataInicio)
                         if (date && !isNaN(date.getTime())) return date
                     }
-                    if (agendamento.dataFim) {
-                        const date = adjustDate(agendamento.dataFim)
-                        if (date && !isNaN(date.getTime())) return date
-                    }
                     break
                 case "Agendamento para Time":
                     if (agendamento.dataFeriado) {
@@ -94,11 +115,6 @@ export default function Admin() {
                     }
                     break
                 case "Administrativo - Lanche":
-                    if (agendamento.data) {
-                        const date = adjustDate(agendamento.data)
-                        if (date && !isNaN(date.getTime())) return date
-                    }
-                    break
                 case "Agendamento para Visitante":
                     if (agendamento.data) {
                         const date = adjustDate(agendamento.data)
@@ -118,8 +134,6 @@ export default function Admin() {
                     }
                     break
             }
-
-            // Fallbacks gerais
             if (agendamento.createdAt) {
                 const date = adjustDate(agendamento.createdAt)
                 if (date && !isNaN(date.getTime())) return date
@@ -135,23 +149,16 @@ export default function Admin() {
         try {
             const agendamentoDate = getAgendamentoDate(agendamento)
             const today = startOfDay(new Date())
-
-            if (isNaN(agendamentoDate.getTime()) || isNaN(today.getTime())) {
-                return false
-            }
-
             return isAfter(agendamentoDate, today) || format(agendamentoDate, "yyyy-MM-dd") === format(today, "yyyy-MM-dd")
         } catch (error) {
-            console.error("Error checking if agendamento is active:", error)
             return false
         }
     }
 
-    const filterAgendamentos = () => {
+    const filterAndSortAgendamentos = () => {
         let filtered = agendamentos
 
         if (activeTab === "ativos") {
-            // Ativos = agendamentos que ainda não passaram da data E que não estão cancelados
             filtered = filtered.filter((agendamento) => isAgendamentoAtivo(agendamento) && agendamento.status !== "cancelado")
         } else if (activeTab === "finalizados") {
             filtered = filtered.filter((agendamento) => !isAgendamentoAtivo(agendamento))
@@ -162,20 +169,90 @@ export default function Admin() {
         if (searchTerm) {
             filtered = filtered.filter(
                 (agendamento) =>
-                    agendamento.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                    agendamento.email.toLowerCase().includes(searchTerm.toLowerCase()),
+                    agendamento.nome?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                    agendamento.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                    agendamento.tipoAgendamento?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                    agendamento.timeSetor?.toLowerCase().includes(searchTerm.toLowerCase()),
             )
         }
 
-        if (tipoFilter !== "todos") {
-            filtered = filtered.filter((agendamento) => agendamento.tipoAgendamento === tipoFilter)
-        }
+        Object.keys(filters).forEach((key) => {
+            const value = filters[key]
+            if (value && value !== "") {
+                if (key === "quantidadeMin") {
+                    filtered = filtered.filter((agendamento) => {
+                        const quantidade =
+                            agendamento.quantidade ||
+                            agendamento.quantidadeVisitantes ||
+                            agendamento.quantidadeAlmocoLanche ||
+                            agendamento.quantidadeJantarCeia ||
+                            agendamento.quantidadeLancheExtra ||
+                            agendamento.quantidadeTiangua ||
+                            agendamento.quantidadeUbajara ||
+                            0
+                        return Number(quantidade) >= Number(value)
+                    })
+                } else if (key === "quantidadeMax") {
+                    filtered = filtered.filter((agendamento) => {
+                        const quantidade =
+                            agendamento.quantidade ||
+                            agendamento.quantidadeVisitantes ||
+                            agendamento.quantidadeAlmocoLanche ||
+                            agendamento.quantidadeJantarCeia ||
+                            agendamento.quantidadeLancheExtra ||
+                            agendamento.quantidadeTiangua ||
+                            agendamento.quantidadeUbajara ||
+                            0
+                        return Number(quantidade) <= Number(value)
+                    })
+                } else if (key.includes("data") || key.includes("Data")) {
+                    if (value instanceof Date) {
+                        filtered = filtered.filter((agendamento) => {
+                            const agendamentoDate = agendamento[key] ? new Date(agendamento[key]) : null
+                            return agendamentoDate && agendamentoDate.toDateString() === value.toDateString()
+                        })
+                    }
+                } else if (key === "isFeriado") {
+                    filtered = filtered.filter((agendamento) => agendamento.isFeriado === (value === "true"))
+                } else if (key === "refeicoes") {
+                    filtered = filtered.filter((agendamento) => {
+                        if (Array.isArray(agendamento.refeicoes)) {
+                            return agendamento.refeicoes.some((r) => r.toLowerCase().includes(value.toLowerCase()))
+                        }
+                        return agendamento.refeicoes?.toLowerCase().includes(value.toLowerCase())
+                    })
+                } else {
+                    filtered = filtered.filter((agendamento) =>
+                        agendamento[key]?.toString().toLowerCase().includes(value.toLowerCase()),
+                    )
+                }
+            }
+        })
 
-        if (centroCustoFilter !== "todos") {
-            filtered = filtered.filter((agendamento) => agendamento.centroCusto === centroCustoFilter)
+        if (sortConfig.key) {
+            filtered.sort((a, b) => {
+                let aValue = a[sortConfig.key]
+                let bValue = b[sortConfig.key]
+
+                if (sortConfig.key.includes("data") || sortConfig.key.includes("Data") || sortConfig.key === "createdAt") {
+                    aValue = new Date(aValue || 0)
+                    bValue = new Date(bValue || 0)
+                }
+
+                if (aValue < bValue) return sortConfig.direction === "asc" ? -1 : 1
+                if (aValue > bValue) return sortConfig.direction === "asc" ? 1 : -1
+                return 0
+            })
         }
 
         setFilteredAgendamentos(filtered)
+    }
+
+    const handleSort = (key) => {
+        setSortConfig((prevConfig) => ({
+            key,
+            direction: prevConfig.key === key && prevConfig.direction === "asc" ? "desc" : "asc",
+        }))
     }
 
     const handleConfirm = async (id, tipo) => {
@@ -233,70 +310,27 @@ export default function Admin() {
         switch (status) {
             case "pendente":
                 return (
-                    <Badge className="bg-yellow-100 text-yellow-800 border-yellow-300 hover:bg-yellow-200">
+                    <Badge className="bg-yellow-100 text-yellow-800 border-yellow-300 hover:bg-yellow-200 hover:text-yellow-900">
                         <AlertCircle className="h-3 w-3 mr-1" />
                         Pendente
                     </Badge>
                 )
             case "confirmado":
                 return (
-                    <Badge className="bg-green-100 text-green-800 border-green-300 hover:bg-green-200">
+                    <Badge className="bg-green-100 text-green-800 border-green-300 hover:bg-green-200 hover:text-green-900">
                         <CheckCircle className="h-3 w-3 mr-1" />
                         Confirmado
                     </Badge>
                 )
             case "cancelado":
                 return (
-                    <Badge className="bg-red-100 text-red-800 border-red-300 hover:bg-red-200">
+                    <Badge className="bg-red-100 text-red-800 border-red-300 hover:bg-red-200 hover:text-red-900">
                         <XCircle className="h-3 w-3 mr-1" />
                         Cancelado
                     </Badge>
                 )
             default:
-                return (
-                    <Badge className="bg-gray-100 text-gray-800 border-gray-300">
-                        <AlertCircle className="h-3 w-3 mr-1" />
-                        {status}
-                    </Badge>
-                )
-        }
-    }
-
-    const getTipoIcon = (tipo) => {
-        switch (tipo) {
-            case "Agendamento para Time":
-                return <Users className="h-5 w-5 text-emerald-600" />
-            case "Home Office":
-                return <Building className="h-5 w-5 text-blue-600" />
-            case "Administrativo - Lanche":
-                return <Coffee className="h-5 w-5 text-orange-600" />
-            case "Agendamento para Visitante":
-                return <MapPin className="h-5 w-5 text-purple-600" />
-            case "Coffee Break":
-                return <Coffee className="h-5 w-5 text-pink-600" />
-            case "Rota Extra":
-                return <Bus className="h-5 w-5 text-indigo-600" />
-            default:
-                return <Calendar className="h-5 w-5 text-gray-600" />
-        }
-    }
-
-    const getTipoColor = (tipo) => {
-        switch (tipo) {
-            case "Agendamento para Time":
-                return "emerald"
-            case "Home Office":
-                return "blue"
-            case "Administrativo - Lanche":
-                return "orange"
-            case "Agendamento para Visitante":
-                return "purple"
-            case "Coffee Break":
-                return "pink"
-            case "Rota Extra":
-                return "indigo"
-            default:
-                return "gray"
+                return <Badge className="bg-gray-100 text-gray-800 border-gray-300 hover:bg-gray-200 hover:text-gray-900">{status}</Badge>
         }
     }
 
@@ -317,420 +351,404 @@ export default function Admin() {
         }
     }
 
-    const getAgendamentoDisplayDate = (agendamento) => {
+    const exportToExcel = (dataToExport = null) => {
+        const data = dataToExport || filteredAgendamentos
+
+        const exportData = data.map((agendamento) => ({
+            ID: agendamento.id,
+            Nome: agendamento.nome,
+            Email: agendamento.email,
+            "Tipo de Agendamento": agendamento.tipoAgendamento,
+            "Tipo de Serviço": agendamento.tipoServico,
+            Status: agendamento.status,
+            "Time/Setor": agendamento.timeSetor,
+            "Centro de Custo": agendamento.centroCusto,
+            Turno: agendamento.turno,
+            Refeitório: agendamento.refeitorio,
+            "Data Início": agendamento.dataInicio ? format(new Date(agendamento.dataInicio), "dd/MM/yyyy") : "",
+            "Data Fim": agendamento.dataFim ? format(new Date(agendamento.dataFim), "dd/MM/yyyy") : "",
+            "Data Coffee": agendamento.dataCoffee ? format(new Date(agendamento.dataCoffee), "dd/MM/yyyy") : "",
+            Data: agendamento.data ? format(new Date(agendamento.data), "dd/MM/yyyy") : "",
+            "Data Feriado": agendamento.dataFeriado ? format(new Date(agendamento.dataFeriado), "dd/MM/yyyy") : "",
+            Horário: agendamento.horario,
+            Cardápio: agendamento.cardapio,
+            "Qtd Almoço/Lanche": agendamento.quantidadeAlmocoLanche,
+            "Qtd Jantar/Ceia": agendamento.quantidadeJantarCeia,
+            "Qtd Lanche Extra": agendamento.quantidadeLancheExtra,
+            "Qtd Visitantes": agendamento.quantidadeVisitantes,
+            "Qtd Tianguá": agendamento.quantidadeTiangua,
+            "Qtd Ubajara": agendamento.quantidadeUbajara,
+            "Qtd Geral": agendamento.quantidade,
+            "Local Entrega": agendamento.localEntrega,
+            Rateio: agendamento.rateio,
+            Acompanhante: agendamento.acompanhante,
+            "Nome Visitante": agendamento.nomeVisitante,
+            Refeições: Array.isArray(agendamento.refeicoes) ? agendamento.refeicoes.join(", ") : agendamento.refeicoes,
+            "É Feriado": agendamento.isFeriado ? "Sim" : "Não",
+            "Categoria Dia": agendamento.dia,
+            Observação: agendamento.observacao,
+            "Motivo Cancelamento": agendamento.motivoCancelamento,
+            "Data Criação": format(new Date(agendamento.createdAt), "dd/MM/yyyy HH:mm"),
+            "Última Atualização": format(new Date(agendamento.updatedAt), "dd/MM/yyyy HH:mm"),
+        }))
+
+        const ws = XLSX.utils.json_to_sheet(exportData)
+        const wb = XLSX.utils.book_new()
+        XLSX.utils.book_append_sheet(wb, ws, "Agendamentos")
+
+        const fileName = `agendamentos_${format(new Date(), "dd-MM-yyyy_HH-mm")}.xlsx`
+        XLSX.writeFile(wb, fileName)
+    }
+
+    const clearFilters = () => {
+        setFilters({
+            nome: "",
+            email: "",
+            tipoAgendamento: "",
+            status: "",
+            tipoServico: "",
+            timeSetor: "",
+            centroCusto: "",
+            turno: "",
+            refeitorio: "",
+            cardapio: "",
+            dataInicio: null,
+            dataFim: null,
+            dataCoffee: null,
+            data: null,
+            quantidadeMin: "",
+            quantidadeMax: "",
+            localEntrega: "",
+            rateio: "",
+            acompanhante: "",
+            nomeVisitante: "",
+            dia: "",
+            isFeriado: "",
+            refeicoes: "",
+        })
+        setSearchTerm("")
+    }
+
+    const formatDate = (dateString) => {
+        if (!dateString) return "-"
         try {
-            switch (agendamento.tipoAgendamento) {
-                case "Home Office":
-                    const dataInicio = agendamento.dataInicio
-                        ? format(adjustDate(agendamento.dataInicio), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })
-                        : null
-                    const dataFim = agendamento.dataFim
-                        ? format(adjustDate(agendamento.dataFim), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })
-                        : null
+            return format(new Date(dateString), "dd/MM/yyyy", { locale: ptBR })
+        } catch {
+            return "-"
+        }
+    }
 
-                    if (dataInicio && dataFim) {
-                        if (dataInicio === dataFim) {
-                            return dataInicio
-                        }
-                        return `${dataInicio} até ${dataFim}`
-                    }
-                    if (dataInicio) return dataInicio
-                    if (dataFim) return dataFim
-                    break
-                case "Agendamento para Time":
-                    if (agendamento.dataFeriado) {
-                        return format(adjustDate(agendamento.dataFeriado), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })
-                    }
-                    if (agendamento.dataInicio) {
-                        return format(adjustDate(agendamento.dataInicio), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })
-                    }
-                    break
-                case "Administrativo - Lanche":
-                    if (agendamento.data) {
-                        return format(adjustDate(agendamento.data), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })
-                    }
-                    break
-                case "Agendamento para Visitante":
-                    if (agendamento.data) {
-                        return format(adjustDate(agendamento.data), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })
-                    }
-                    break
-                case "Coffee Break":
-                    if (agendamento.dataCoffee) {
-                        return format(adjustDate(agendamento.dataCoffee), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })
-                    }
-                    break
-                case "Rota Extra":
-                    const rotaInicio = agendamento.dataInicio
-                        ? format(adjustDate(agendamento.dataInicio), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })
-                        : null
-                    const rotaFim = agendamento.dataFim
-                        ? format(adjustDate(agendamento.dataFim), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })
-                        : null
+    const formatDateTime = (dateString) => {
+        if (!dateString) return "-"
+        try {
+            return format(new Date(dateString), "dd/MM/yyyy HH:mm", { locale: ptBR })
+        } catch {
+            return "-"
+        }
+    }
 
-                    if (rotaInicio && rotaFim) {
-                        if (rotaInicio === rotaFim) {
-                            return rotaInicio
-                        }
-                        return `${rotaInicio} até ${rotaFim}`
-                    }
-                    if (rotaInicio) return rotaInicio
-                    if (rotaFim) return rotaFim
-                    break
+    const formatRefeicoes = (refeicoes) => {
+        if (!refeicoes) return "-"
+        if (Array.isArray(refeicoes)) {
+            return refeicoes.join(", ")
+        }
+        if (typeof refeicoes === "string" && refeicoes.startsWith("[")) {
+            try {
+                const parsed = JSON.parse(refeicoes)
+                return Array.isArray(parsed) ? parsed.join(", ") : refeicoes
+            } catch {
+                return refeicoes
             }
-
-            return format(adjustDate(agendamento.createdAt), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })
-        } catch (error) {
-            console.error("Error formatting date:", error)
-            return "Data não disponível"
         }
-    }
-
-    const renderAgendamentoCard = (agendamento) => {
-        const tipo = agendamento.tipoAgendamento
-        const tipoColor = getTipoColor(tipo)
-        const isCanceled = agendamento.status === "cancelado"
-
-        return (
-            <Card
-                key={agendamento.id}
-                className="cursor-pointer transition-all hover:shadow-lg relative"
-                onClick={() => openDetailModal(agendamento)}
-            >
-                <CardHeader className={`p-4 rounded-t-lg bg-${tipoColor}-50 border-b`}>
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                            <div className={`bg-${tipoColor}-100 p-2 rounded-full`}>{getTipoIcon(tipo)}</div>
-                            <div>
-                                <h3 className={`text-${tipoColor}-800 font-medium text-sm`}>{tipo}</h3>
-                                <p className="text-xs text-gray-500">{agendamento.nome}</p>
-                            </div>
-                        </div>
-                        <div className="flex items-center gap-2">
-                            {agendamento.status === "pendente" && isAgendamentoAtivo(agendamento) && (
-                                <>
-                                    <Button
-                                        size="sm"
-                                        onClick={(e) => {
-                                            e.stopPropagation()
-                                            handleConfirm(agendamento.id, tipo)
-                                        }}
-                                        className="bg-green-600 hover:bg-green-700"
-                                        disabled={loadingAction === agendamento.id}
-                                    >
-                                        {loadingAction === agendamento.id ? (
-                                            <Loader2 className="h-3 w-3 animate-spin" />
-                                        ) : (
-                                            <Check className="h-3 w-3" />
-                                        )}
-                                    </Button>
-                                    <Button
-                                        size="sm"
-                                        onClick={(e) => {
-                                            e.stopPropagation()
-                                            handleCancelClick(agendamento)
-                                        }}
-                                        className="bg-red-600 hover:bg-red-700"
-                                        disabled={loadingAction === agendamento.id}
-                                    >
-                                        {loadingAction === agendamento.id ? (
-                                            <Loader2 className="h-3 w-3 animate-spin" />
-                                        ) : (
-                                            <X className="h-3 w-3" />
-                                        )}
-                                    </Button>
-                                </>
-                            )}
-                        </div>
-                    </div>
-                </CardHeader>
-                <CardContent className="p-4 pt-3 pb-16">{renderAgendamentoDetails(agendamento)}</CardContent>
-                <div className="absolute bottom-0 left-0 right-0 p-4 border-t bg-white flex justify-end items-center gap-2 rounded-b-lg">
-                    {getStatusBadge(agendamento.status)}
-                </div>
-            </Card>
-        )
-    }
-
-    const renderAgendamentoDetails = (agendamento) => {
-        const tipo = agendamento.tipoAgendamento
-        const tipoColor = getTipoColor(tipo)
-
-        switch (tipo) {
-            case "Agendamento para Time":
-                return (
-                    <div className="space-y-2">
-                        <div className="flex items-center gap-2">
-                            <Calendar className={`h-4 w-4 text-${tipoColor}-600`} />
-                            <span className="text-sm">{getAgendamentoDisplayDate(agendamento)}</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                            <Users className={`h-4 w-4 text-${tipoColor}-600`} />
-                            <span className="text-sm">{agendamento.timeSetor}</span>
-                        </div>
-                        {agendamento.turno && (
-                            <div className="flex items-center gap-2">
-                                <Clock className={`h-4 w-4 text-${tipoColor}-600`} />
-                                <span className="text-sm">Turno {agendamento.turno}</span>
-                            </div>
-                        )}
-                        {agendamento.isFeriado && (
-                            <div className="flex items-center gap-2">
-                                <Calendar className={`h-4 w-4 text-${tipoColor}-600`} />
-                                <span className="text-sm">Feriado</span>
-                            </div>
-                        )}
-                        {agendamento.centroCusto && (
-                            <div className="flex items-center gap-2">
-                                <DollarSign className={`h-4 w-4 text-${tipoColor}-600`} />
-                                <span className="text-sm">{agendamento.centroCusto}</span>
-                            </div>
-                        )}
-                        {(agendamento.quantidadeAlmocoLanche ||
-                            agendamento.quantidadeJantarCeia ||
-                            agendamento.quantidadeLancheExtra) && (
-                                <div className="flex flex-col gap-1">
-                                    {agendamento.quantidadeAlmocoLanche > 0 && (
-                                        <div className="flex items-center gap-2">
-                                            <Utensils className={`h-4 w-4 text-${tipoColor}-600`} />
-                                            <span className="text-sm">{agendamento.quantidadeAlmocoLanche} pessoas (Almoço/Lanche)</span>
-                                        </div>
-                                    )}
-                                    {agendamento.quantidadeJantarCeia > 0 && (
-                                        <div className="flex items-center gap-2">
-                                            <Utensils className={`h-4 w-4 text-${tipoColor}-600`} />
-                                            <span className="text-sm">{agendamento.quantidadeJantarCeia} pessoas (Jantar/Ceia)</span>
-                                        </div>
-                                    )}
-                                    {agendamento.quantidadeLancheExtra > 0 && (
-                                        <div className="flex items-center gap-2">
-                                            <Coffee className={`h-4 w-4 text-${tipoColor}-600`} />
-                                            <span className="text-sm">{agendamento.quantidadeLancheExtra} pessoas (Lanche Extra)</span>
-                                        </div>
-                                    )}
-                                </div>
-                            )}
-                    </div>
-                )
-
-            case "Home Office":
-                return (
-                    <div className="space-y-2">
-                        <div className="flex items-center gap-2">
-                            <Calendar className={`h-4 w-4 text-${tipoColor}-600`} />
-                            <span className="text-sm">{getAgendamentoDisplayDate(agendamento)}</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                            <Users className={`h-4 w-4 text-${tipoColor}-600`} />
-                            <span className="text-sm">{agendamento.timeSetor}</span>
-                        </div>
-                        {agendamento.turno && (
-                            <div className="flex items-center gap-2">
-                                <Clock className={`h-4 w-4 text-${tipoColor}-600`} />
-                                <span className="text-sm">Turno {agendamento.turno}</span>
-                            </div>
-                        )}
-                        {agendamento.refeitorio && (
-                            <div className="flex items-center gap-2">
-                                <Building className={`h-4 w-4 text-${tipoColor}-600`} />
-                                <span className="text-sm">Refeitório {agendamento.refeitorio}</span>
-                            </div>
-                        )}
-                        {agendamento.refeicoes && Array.isArray(agendamento.refeicoes) && agendamento.refeicoes.length > 0 && (
-                            <div className="flex items-center gap-2">
-                                <Utensils className={`h-4 w-4 text-${tipoColor}-600`} />
-                                <span className="text-sm">{agendamento.refeicoes.join(", ")}</span>
-                            </div>
-                        )}
-                    </div>
-                )
-
-            case "Administrativo - Lanche":
-                return (
-                    <div className="space-y-2">
-                        <div className="flex items-center gap-2">
-                            <Calendar className={`h-4 w-4 text-${tipoColor}-600`} />
-                            <span className="text-sm">{getAgendamentoDisplayDate(agendamento)}</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                            <Users className={`h-4 w-4 text-${tipoColor}-600`} />
-                            <span className="text-sm">{agendamento.timeSetor}</span>
-                        </div>
-                        {agendamento.turno && (
-                            <div className="flex items-center gap-2">
-                                <Clock className={`h-4 w-4 text-${tipoColor}-600`} />
-                                <span className="text-sm">Turno {agendamento.turno}</span>
-                            </div>
-                        )}
-                        {agendamento.refeitorio && (
-                            <div className="flex items-center gap-2">
-                                <Building className={`h-4 w-4 text-${tipoColor}-600`} />
-                                <span className="text-sm">Refeitório {agendamento.refeitorio}</span>
-                            </div>
-                        )}
-                        <div className="flex items-center gap-2">
-                            <Coffee className={`h-4 w-4 text-${tipoColor}-600`} />
-                            <span className="text-sm">{agendamento.refeicoes || "Lanche Individual"}</span>
-                        </div>
-                    </div>
-                )
-
-            case "Agendamento para Visitante":
-                return (
-                    <div className="space-y-2">
-                        <div className="flex items-center gap-2">
-                            <Calendar className={`h-4 w-4 text-${tipoColor}-600`} />
-                            <span className="text-sm">{getAgendamentoDisplayDate(agendamento)}</span>
-                        </div>
-                        {agendamento.refeitorio && (
-                            <div className="flex items-center gap-2">
-                                <Building className={`h-4 w-4 text-${tipoColor}-600`} />
-                                <span className="text-sm">Refeitório {agendamento.refeitorio}</span>
-                            </div>
-                        )}
-                        <div className="flex items-center gap-2">
-                            <Users className={`h-4 w-4 text-${tipoColor}-600`} />
-                            <span className="text-sm">{agendamento.quantidadeVisitantes} visitantes</span>
-                        </div>
-                        {agendamento.acompanhante && (
-                            <div className="flex items-center gap-2">
-                                <User className={`h-4 w-4 text-${tipoColor}-600`} />
-                                <span className="text-sm">Acompanhante: {agendamento.acompanhante}</span>
-                            </div>
-                        )}
-                        {agendamento.centroCusto && (
-                            <div className="flex items-center gap-2">
-                                <DollarSign className={`h-4 w-4 text-${tipoColor}-600`} />
-                                <span className="text-sm">{agendamento.centroCusto}</span>
-                            </div>
-                        )}
-                    </div>
-                )
-
-            case "Coffee Break":
-                return (
-                    <div className="space-y-2">
-                        <div className="flex items-center gap-2">
-                            <Calendar className={`h-4 w-4 text-${tipoColor}-600`} />
-                            <span className="text-sm">{getAgendamentoDisplayDate(agendamento)}</span>
-                        </div>
-                        {agendamento.horario && (
-                            <div className="flex items-center gap-2">
-                                <Clock className={`h-4 w-4 text-${tipoColor}-600`} />
-                                <span className="text-sm">{agendamento.horario}</span>
-                            </div>
-                        )}
-                        <div className="flex items-center gap-2">
-                            <Users className={`h-4 w-4 text-${tipoColor}-600`} />
-                            <span className="text-sm">{agendamento.quantidade} pessoas</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                            <Coffee className={`h-4 w-4 text-${tipoColor}-600`} />
-                            <span className="text-sm">{agendamento.cardapio}</span>
-                        </div>
-                        {agendamento.timeSetor && (
-                            <div className="flex items-center gap-2">
-                                <Users className={`h-4 w-4 text-${tipoColor}-600`} />
-                                <span className="text-sm">{agendamento.timeSetor}</span>
-                            </div>
-                        )}
-                        {agendamento.localEntrega && (
-                            <div className="flex items-center gap-2">
-                                <MapPin className={`h-4 w-4 text-${tipoColor}-600`} />
-                                <span className="text-sm">{agendamento.localEntrega}</span>
-                            </div>
-                        )}
-                    </div>
-                )
-
-            case "Rota Extra":
-                return (
-                    <div className="space-y-2">
-                        <div className="flex items-center gap-2">
-                            <Calendar className={`h-4 w-4 text-${tipoColor}-600`} />
-                            <span className="text-sm">{getAgendamentoDisplayDate(agendamento)}</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                            <Users className={`h-4 w-4 text-${tipoColor}-600`} />
-                            <span className="text-sm">{agendamento.timeSetor}</span>
-                        </div>
-                        {agendamento.dia && (
-                            <div className="flex items-center gap-2">
-                                <Calendar className={`h-4 w-4 text-${tipoColor}-600`} />
-                                <span className="text-sm">{agendamento.dia}</span>
-                            </div>
-                        )}
-                        {agendamento.centroCusto && (
-                            <div className="flex items-center gap-2">
-                                <DollarSign className={`h-4 w-4 text-${tipoColor}-600`} />
-                                <span className="text-sm">{agendamento.centroCusto}</span>
-                            </div>
-                        )}
-                        <div className="flex items-center gap-2">
-                            <MapPin className={`h-4 w-4 text-${tipoColor}-600`} />
-                            <span className="text-sm">
-                                {agendamento.quantidadeTiangua && `${agendamento.quantidadeTiangua} pessoas (Tianguá)`}
-                                {agendamento.quantidadeTiangua && agendamento.quantidadeUbajara && " | "}
-                                {agendamento.quantidadeUbajara && `${agendamento.quantidadeUbajara} pessoas (Ubajara)`}
-                            </span>
-                        </div>
-                    </div>
-                )
-
-            default:
-                return (
-                    <div className="space-y-2">
-                        <div className="flex items-center gap-2">
-                            <Calendar className="h-4 w-4 text-gray-600" />
-                            <span className="text-sm">{getAgendamentoDisplayDate(agendamento)}</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                            <FileText className="h-4 w-4 text-gray-600" />
-                            <span className="text-sm">Tipo não reconhecido</span>
-                        </div>
-                    </div>
-                )
-        }
-    }
-
-    const handleExportXLSX = async () => {
-        try {
-            setExportLoading(true)
-
-            const blob = await exportAgendamentosXLSX()
-
-            const url = window.URL.createObjectURL(
-                new Blob([blob], {
-                    type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                }),
-            )
-
-            const link = document.createElement("a")
-            link.href = url
-            link.setAttribute("download", `agendamentos_${format(new Date(), "dd-MM-yyyy_HH-mm")}.xlsx`)
-            document.body.appendChild(link)
-            link.click()
-
-            link.parentNode.removeChild(link)
-            window.URL.revokeObjectURL(url)
-
-            console.log("Exportação realizada com sucesso")
-        } catch (error) {
-            console.error("Erro ao exportar agendamentos:", error)
-            setErrorTitle("Erro na exportação")
-            setErrorMessage(`Não foi possível exportar os agendamentos: ${error.message}`)
-            setErrorModalOpen(true)
-        } finally {
-            setExportLoading(false)
-        }
+        return refeicoes
     }
 
     const totalPages = Math.ceil(filteredAgendamentos.length / ITEMS_PER_PAGE)
     const startIndex = (currentPage - 1) * ITEMS_PER_PAGE
     const endIndex = startIndex + ITEMS_PER_PAGE
     const currentAgendamentos = filteredAgendamentos.slice(startIndex, endIndex)
-
     const stats = getStats()
+
+    const getVisibleColumns = () => {
+        const baseCols = ["nome", "email", "tipoAgendamento", "status"]
+        const actionCols = ["actions"]
+
+        const typeSpecificCols = {
+            "Agendamento para Time": [
+                "timeSetor",
+                "centroCusto",
+                "turno",
+                "dataInicio",
+                "dataFim",
+                "dataFeriado",
+                "isFeriado",
+                "quantidadeAlmocoLanche",
+                "quantidadeJantarCeia",
+                "quantidadeLancheExtra",
+                "observacao",
+            ],
+            "Home Office": ["timeSetor", "dataInicio", "dataFim", "turno", "refeitorio", "refeicoes", "observacao"],
+            "Administrativo - Lanche": ["timeSetor", "data", "turno", "refeitorio", "refeicoes", "observacao"],
+            "Agendamento para Visitante": [
+                "nomeVisitante",
+                "data",
+                "refeitorio",
+                "quantidadeVisitantes",
+                "acompanhante",
+                "centroCusto",
+                "observacao",
+                "turno",
+            ],
+            "Coffee Break": [
+                "timeSetor",
+                "cardapio",
+                "quantidade",
+                "centroCusto",
+                "rateio",
+                "dataCoffee",
+                "horario",
+                "localEntrega",
+                "observacao",
+                "turno",
+            ],
+            "Rota Extra": [
+                "timeSetor",
+                "centroCusto",
+                "dia",
+                "dataInicio",
+                "dataFim",
+                "quantidadeTiangua",
+                "quantidadeUbajara",
+                "observacao",
+            ],
+        }
+
+        const { tipoAgendamento } = filters
+        if (tipoAgendamento && typeSpecificCols[tipoAgendamento]) {
+            return [...baseCols, ...typeSpecificCols[tipoAgendamento], "createdAt", ...actionCols]
+        }
+
+        // Default columns when no specific type is selected
+        return [
+            ...baseCols,
+            "timeSetor",
+            "centroCusto",
+            "turno",
+            "dataInicio",
+            "dataFim",
+            "dataCoffee",
+            "data",
+            "dataFeriado",
+            "quantidade",
+            "createdAt",
+            ...actionCols,
+        ]
+    }
+
+    const allColumns = {
+        nome: {
+            label: "Nome",
+            sortable: true,
+            minWidth: "150px",
+            cell: (ag) => <TableCell className="font-medium">{ag.nome || "-"}</TableCell>,
+        },
+        email: {
+            label: "Email",
+            sortable: true,
+            minWidth: "200px",
+            cell: (ag) => <TableCell>{ag.email || "-"}</TableCell>,
+        },
+        tipoAgendamento: {
+            label: "Tipo de Agendamento",
+            sortable: true,
+            minWidth: "180px",
+            cell: (ag) => (
+                <TableCell>
+                    <Badge variant="outline" className="text-xs">
+                        {ag.tipoAgendamento || "-"}
+                    </Badge>
+                </TableCell>
+            ),
+        },
+        tipoServico: {
+            label: "Tipo Serviço",
+            sortable: true,
+            minWidth: "120px",
+            cell: (ag) => <TableCell>{ag.tipoServico || "-"}</TableCell>,
+        },
+        status: {
+            label: "Status",
+            sortable: true,
+            minWidth: "100px",
+            cell: (ag) => <TableCell>{getStatusBadge(ag.status)}</TableCell>,
+        },
+        timeSetor: {
+            label: "Time/Setor",
+            sortable: true,
+            minWidth: "120px",
+            cell: (ag) => <TableCell>{ag.timeSetor || "-"}</TableCell>,
+        },
+        centroCusto: {
+            label: "Centro de Custo",
+            minWidth: "150px",
+            cell: (ag) => <TableCell className="text-xs">{ag.centroCusto || "-"}</TableCell>,
+        },
+        turno: { label: "Turno", minWidth: "80px", cell: (ag) => <TableCell>{ag.turno || "-"}</TableCell> },
+        refeitorio: {
+            label: "Refeitório",
+            minWidth: "100px",
+            cell: (ag) => <TableCell>{ag.refeitorio || "-"}</TableCell>,
+        },
+        dataInicio: {
+            label: "Data Início",
+            minWidth: "100px",
+            cell: (ag) => <TableCell>{formatDate(ag.dataInicio)}</TableCell>,
+        },
+        dataFim: {
+            label: "Data Fim",
+            minWidth: "100px",
+            cell: (ag) => <TableCell>{formatDate(ag.dataFim)}</TableCell>,
+        },
+        dataCoffee: {
+            label: "Data Coffee",
+            minWidth: "100px",
+            cell: (ag) => <TableCell>{formatDate(ag.dataCoffee)}</TableCell>,
+        },
+        data: { label: "Data", minWidth: "100px", cell: (ag) => <TableCell>{formatDate(ag.data)}</TableCell> },
+        dataFeriado: {
+            label: "Data Feriado",
+            minWidth: "100px",
+            cell: (ag) => <TableCell>{formatDate(ag.dataFeriado)}</TableCell>,
+        },
+        horario: { label: "Horário", minWidth: "80px", cell: (ag) => <TableCell>{ag.horario || "-"}</TableCell> },
+        cardapio: { label: "Cardápio", minWidth: "120px", cell: (ag) => <TableCell>{ag.cardapio || "-"}</TableCell> },
+        quantidadeAlmocoLanche: {
+            label: "Qtd Almoço/Lanche",
+            minWidth: "180px",
+            cell: (ag) => <TableCell>{ag.quantidadeAlmocoLanche || "-"}</TableCell>,
+        },
+        quantidadeJantarCeia: {
+            label: "Qtd Jantar/Ceia",
+            minWidth: "180px",
+            cell: (ag) => <TableCell>{ag.quantidadeJantarCeia || "-"}</TableCell>,
+        },
+        quantidadeLancheExtra: {
+            label: "Qtd Lanche Extra",
+            minWidth: "180px",
+            cell: (ag) => <TableCell>{ag.quantidadeLancheExtra || "-"}</TableCell>,
+        },
+        quantidadeVisitantes: {
+            label: "Qtd Visitantes",
+            minWidth: "150px",
+            cell: (ag) => <TableCell>{ag.quantidadeVisitantes || "-"}</TableCell>,
+        },
+        quantidadeTiangua: {
+            label: "Qtd Tianguá",
+            minWidth: "150px",
+            cell: (ag) => <TableCell>{ag.quantidadeTiangua || "-"}</TableCell>,
+        },
+        quantidadeUbajara: {
+            label: "Qtd Ubajara",
+            minWidth: "150px",
+            cell: (ag) => <TableCell>{ag.quantidadeUbajara || "-"}</TableCell>,
+        },
+        quantidade: {
+            label: "Quantidade Geral",
+            minWidth: "150px",
+            cell: (ag) => <TableCell>{ag.quantidade || "-"}</TableCell>,
+        },
+        localEntrega: {
+            label: "Local Entrega",
+            minWidth: "120px",
+            cell: (ag) => <TableCell>{ag.localEntrega || "-"}</TableCell>,
+        },
+        rateio: { label: "Rateio", minWidth: "80px", cell: (ag) => <TableCell>{ag.rateio || "-"}</TableCell> },
+        acompanhante: {
+            label: "Acompanhante",
+            minWidth: "120px",
+            cell: (ag) => <TableCell>{ag.acompanhante || "-"}</TableCell>,
+        },
+        nomeVisitante: {
+            label: "Nome Visitante",
+            minWidth: "120px",
+            cell: (ag) => <TableCell>{ag.nomeVisitante || "-"}</TableCell>,
+        },
+        refeicoes: {
+            label: "Refeições",
+            minWidth: "150px",
+            cell: (ag) => (
+                <TableCell className="max-w-[150px] truncate" title={formatRefeicoes(ag.refeicoes)}>
+                    {formatRefeicoes(ag.refeicoes)}
+                </TableCell>
+            ),
+        },
+        isFeriado: {
+            label: "Feriado",
+            minWidth: "80px",
+            cell: (ag) => <TableCell>{ag.isFeriado ? "Sim" : "Não"}</TableCell>,
+        },
+        dia: { label: "Categoria Dia", minWidth: "100px", cell: (ag) => <TableCell>{ag.dia || "-"}</TableCell> },
+        observacao: {
+            label: "Observação",
+            minWidth: "200px",
+            cell: (ag) => (
+                <TableCell className="max-w-[200px] truncate" title={ag.observacao}>
+                    {ag.observacao || "-"}
+                </TableCell>
+            ),
+        },
+        createdAt: {
+            label: "Criado em",
+            sortable: true,
+            minWidth: "120px",
+            cell: (ag) => <TableCell>{formatDateTime(ag.createdAt)}</TableCell>,
+        },
+        updatedAt: {
+            label: "Atualizado em",
+            minWidth: "120px",
+            cell: (ag) => <TableCell>{formatDateTime(ag.updatedAt)}</TableCell>,
+        },
+        actions: {
+            label: "Ações",
+            minWidth: "120px",
+            sticky: true,
+            cell: (ag) => (
+                <TableCell className="sticky right-0 bg-white rounded-r-lg">
+                    <div className="flex items-center gap-2">
+                        <Button size="sm" variant="outline" onClick={() => openDetailModal(ag)}>
+                            <Eye className="h-3 w-3" />
+                        </Button>
+                        {ag.status === "pendente" && isAgendamentoAtivo(ag) && (
+                            <>
+                                <Button
+                                    size="sm"
+                                    onClick={() => handleConfirm(ag.id, ag.tipoAgendamento)}
+                                    className="bg-green-600 hover:bg-green-700"
+                                    disabled={loadingAction === ag.id}
+                                >
+                                    {loadingAction === ag.id ? (
+                                        <Loader2 className="h-3 w-3 animate-spin" />
+                                    ) : (
+                                        <Check className="h-3 w-3" />
+                                    )}
+                                </Button>
+                                <Button
+                                    size="sm"
+                                    onClick={() => handleCancelClick(ag)}
+                                    className="bg-red-600 hover:bg-red-700"
+                                    disabled={loadingAction === ag.id}
+                                >
+                                    {loadingAction === ag.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <X className="h-3 w-3" />}
+                                </Button>
+                            </>
+                        )}
+                    </div>
+                </TableCell>
+            ),
+        },
+    }
+
+    const visibleColumns = getVisibleColumns()
 
     if (loading) {
         return (
@@ -747,7 +765,7 @@ export default function Admin() {
 
     return (
         <div className="min-h-screen bg-gradient-to-b from-emerald-700 to-emerald-900">
-            <header className="bg-white shadow-lg border-b">
+            <header className="bg-white shadow-lg border-b fixed top-0 w-full z-50">
                 <div className="max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8">
                     <div className="flex justify-between items-center">
                         <div className="flex items-center gap-4">
@@ -760,15 +778,6 @@ export default function Admin() {
                             </div>
                         </div>
                         <div className="flex items-center gap-2">
-                            {/**<Button
-                                variant="default"
-                                onClick={handleExportXLSX}
-                                disabled={exportLoading}
-                                className="flex items-center gap-2"
-                            >
-                                {exportLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sheet className="h-4 w-4" />}
-                                {exportLoading ? "Exportando Planilha..." : "Exportar Planilha"}
-                            </Button>**/}
                             <Button
                                 variant="outline"
                                 onClick={handleLogout}
@@ -782,74 +791,71 @@ export default function Admin() {
                 </div>
             </header>
 
-            <main className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-                <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
-                    <Card className="overflow-hidden">
+            <main className="max-w-7xl mx-auto pt-28 pb-6 px-4 sm:px-6 lg:px-8">
+                <div className="grid grid-cols-2 md:grid-cols-6 gap-4 mb-6">
+                    <Card>
                         <CardContent className="p-4">
                             <div className="flex items-center justify-between">
                                 <div>
                                     <p className="text-xs font-medium text-gray-600">Total</p>
                                     <p className="text-2xl font-bold text-gray-900">{stats.total}</p>
                                 </div>
-                                <div className="bg-gray-100 p-2 rounded-full">
-                                    <Calendar className="h-4 w-4 text-gray-600" />
-                                </div>
+                                <Calendar className="h-4 w-4 text-gray-600" />
                             </div>
                         </CardContent>
                     </Card>
-
-                    <Card className="overflow-hidden">
+                    <Card>
                         <CardContent className="p-4">
                             <div className="flex items-center justify-between">
                                 <div>
                                     <p className="text-xs font-medium text-emerald-600">Ativos</p>
                                     <p className="text-2xl font-bold text-emerald-700">{stats.ativos}</p>
                                 </div>
-                                <div className="bg-emerald-100 p-2 rounded-full">
-                                    <Calendar className="h-4 w-4 text-emerald-600" />
-                                </div>
+                                <Calendar className="h-4 w-4 text-emerald-600" />
                             </div>
                         </CardContent>
                     </Card>
-
-                    <Card className="overflow-hidden">
+                    <Card>
                         <CardContent className="p-4">
                             <div className="flex items-center justify-between">
                                 <div>
                                     <p className="text-xs font-medium text-yellow-600">Pendentes</p>
                                     <p className="text-2xl font-bold text-yellow-700">{stats.pendentes}</p>
                                 </div>
-                                <div className="bg-yellow-100 p-2 rounded-full">
-                                    <AlertCircle className="h-4 w-4 text-yellow-600" />
-                                </div>
+                                <AlertCircle className="h-4 w-4 text-yellow-600" />
                             </div>
                         </CardContent>
                     </Card>
-
-                    <Card className="overflow-hidden">
+                    <Card>
                         <CardContent className="p-4">
                             <div className="flex items-center justify-between">
                                 <div>
                                     <p className="text-xs font-medium text-green-600">Confirmados</p>
                                     <p className="text-2xl font-bold text-green-700">{stats.confirmados}</p>
                                 </div>
-                                <div className="bg-green-100 p-2 rounded-full">
-                                    <CheckCircle className="h-4 w-4 text-green-600" />
-                                </div>
+                                <CheckCircle className="h-4 w-4 text-green-600" />
                             </div>
                         </CardContent>
                     </Card>
-
-                    <Card className="overflow-hidden">
+                    <Card>
+                        <CardContent className="p-4">
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <p className="text-xs font-medium text-red-600">Cancelados</p>
+                                    <p className="text-2xl font-bold text-red-700">{stats.cancelados}</p>
+                                </div>
+                                <XCircle className="h-4 w-4 text-red-600" />
+                            </div>
+                        </CardContent>
+                    </Card>
+                    <Card>
                         <CardContent className="p-4">
                             <div className="flex items-center justify-between">
                                 <div>
                                     <p className="text-xs font-medium text-blue-600">Finalizados</p>
                                     <p className="text-2xl font-bold text-blue-700">{stats.finalizados}</p>
                                 </div>
-                                <div className="bg-blue-100 p-2 rounded-full">
-                                    <CheckCircle className="h-4 w-4 text-blue-600" />
-                                </div>
+                                <CheckCircle className="h-4 w-4 text-blue-600" />
                             </div>
                         </CardContent>
                     </Card>
@@ -857,113 +863,43 @@ export default function Admin() {
 
                 <Card className="mb-6">
                     <CardHeader className="bg-emerald-50 border-b rounded-t-lg">
-                        <div className="flex items-center justify-between">
+                        <div className="flex items-center justify-between flex-wrap gap-y-2">
                             <div className="flex items-center gap-2">
                                 <Filter className="h-5 w-5 text-emerald-600" />
-                                <h3 className="text-lg font-semibold text-emerald-800">Filtros</h3>
+                                <CardTitle className="text-emerald-800">Filtros e Busca</CardTitle>
                             </div>
-                            <div className="flex items-center gap-2">
-                                <Button
-                                    variant={viewMode === "grid" ? "default" : "outline"}
-                                    size="sm"
-                                    onClick={() => setViewMode("grid")}
-                                    className="h-8 w-8 p-0"
-                                >
-                                    <Grid3X3 className="h-4 w-4" />
+                            <div className="flex items-center gap-2 flex-wrap">
+                                <Button variant="default" onClick={() => exportToExcel()} className="flex items-center gap-2">
+                                    <Download className="h-4 w-4" />
+                                    Exportar Filtrados ({filteredAgendamentos.length})
+                                </Button>
+                                <Button variant="outline" onClick={() => exportToExcel(agendamentos)} className="flex items-center gap-2">
+                                    <Download className="h-4 w-4" />
+                                    Exportar Todos ({agendamentos.length})
                                 </Button>
                                 <Button
-                                    variant={viewMode === "list" ? "default" : "outline"}
-                                    size="sm"
-                                    onClick={() => setViewMode("list")}
-                                    className="h-8 w-8 p-0"
+                                    variant="outline"
+                                    onClick={() => setAdvancedFiltersOpen(true)}
+                                    className="flex items-center gap-2"
                                 >
-                                    <List className="h-4 w-4" />
+                                    <Settings className="h-4 w-4" />
+                                    Filtros Avançados
+                                </Button>
+                                <Button variant="outline" onClick={clearFilters}>
+                                    Limpar Filtros
                                 </Button>
                             </div>
                         </div>
                     </CardHeader>
                     <CardContent className="p-4">
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium text-gray-700 flex items-center gap-2">
-                                    <Search className="h-4 w-4 text-emerald-600" />
-                                    Buscar
-                                </label>
+                        <div className="flex gap-4">
+                            <div className="flex-1">
                                 <Input
-                                    placeholder="Nome ou email..."
+                                    placeholder="Buscar por nome, email, tipo de agendamento ou setor..."
                                     value={searchTerm}
                                     onChange={(e) => setSearchTerm(e.target.value)}
-                                    className="h-9"
+                                    className="w-full"
                                 />
-                            </div>
-
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium text-gray-700 flex items-center gap-2">
-                                    <FileText className="h-4 w-4 text-emerald-600" />
-                                    Tipo
-                                </label>
-                                <Select value={tipoFilter} onValueChange={setTipoFilter}>
-                                    <SelectTrigger className="h-9">
-                                        <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="todos">Todos os tipos</SelectItem>
-                                        <SelectItem value="Agendamento para Time">Agendamento para Time</SelectItem>
-                                        <SelectItem value="Home Office">Home Office</SelectItem>
-                                        <SelectItem value="Administrativo - Lanche">Administrativo - Lanche</SelectItem>
-                                        <SelectItem value="Agendamento para Visitante">Agendamento para Visitante</SelectItem>
-                                        <SelectItem value="Coffee Break">Coffee Break</SelectItem>
-                                        <SelectItem value="Rota Extra">Rota Extra</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                            </div>
-
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium text-gray-700 flex items-center gap-2">
-                                    <DollarSign className="h-4 w-4 text-emerald-600" />
-                                    Centro de Custo
-                                </label>
-                                <Select value={centroCustoFilter} onValueChange={setCentroCustoFilter}>
-                                    <SelectTrigger className="h-9">
-                                        <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="todos">Todos os centros de custo</SelectItem>
-                                        <SelectItem value="101002-SUPPLY">101002-SUPPLY</SelectItem>
-                                        <SelectItem value="101003-SUPPLY">101003-SUPPLY</SelectItem>
-                                        <SelectItem value="101004-RH">101004-RH</SelectItem>
-                                        <SelectItem value="101005-OPEX">101005-OPEX</SelectItem>
-                                        <SelectItem value="101007-OPEX">101007-OPEX</SelectItem>
-                                        <SelectItem value="101009-SUPPLY">101009-SUPPLY</SelectItem>
-                                        <SelectItem value="101010-ENGENHARIA">101010-ENGENHARIA</SelectItem>
-                                        <SelectItem value="101011-ENGENHARIA">101011-ENGENHARIA</SelectItem>
-                                        <SelectItem value="102000-PESQUISA">102000-PESQUISA</SelectItem>
-                                        <SelectItem value="201001-MANUFATURA">201001-MANUFATURA</SelectItem>
-                                        <SelectItem value="201002-MANUFATURA">201002-MANUFATURA</SelectItem>
-                                        <SelectItem value="201003-MANUFATURA">201003-MANUFATURA</SelectItem>
-                                        <SelectItem value="201004-MANUFATURA">201004-MANUFATURA</SelectItem>
-                                        <SelectItem value="201006-MANUFATURA">201006-MANUFATURA</SelectItem>
-                                        <SelectItem value="201007-MANUTENÇÃO">201007-MANUTENÇÃO</SelectItem>
-                                        <SelectItem value="201008-SUPPLY">201008-SUPPLY</SelectItem>
-                                        <SelectItem value="201009-SUPPLY">201009-SUPPLY</SelectItem>
-                                        <SelectItem value="201011-GPM">201011-GPM</SelectItem>
-                                        <SelectItem value="201012-QUALIDADE">201012-QUALIDADE</SelectItem>
-                                        <SelectItem value="201013-QUALIDADE">201013-QUALIDADE</SelectItem>
-                                        <SelectItem value="301001-AGRO">301001-AGRO</SelectItem>
-                                        <SelectItem value="301002-AGRO">301002-AGRO</SelectItem>
-                                        <SelectItem value="301006-AGRO">301006-AGRO</SelectItem>
-                                        <SelectItem value="301007-MANUTENÇÃO">301007-MANUTENÇÃO</SelectItem>
-                                        <SelectItem value="301009-AGRO">301009-AGRO</SelectItem>
-                                        <SelectItem value="401001-OPEX">401001-OPEX</SelectItem>
-                                        <SelectItem value="401003-OPEX">401003-OPEX</SelectItem>
-                                        <SelectItem value="401004-MANUTENÇÃO">401004-MANUTENÇÃO</SelectItem>
-                                        <SelectItem value="401005-AGRO">401005-AGRO</SelectItem>
-                                        <SelectItem value="401006-AGRO">401006-AGRO</SelectItem>
-                                        <SelectItem value="401007-MANUTENÇÃO">401007-MANUTENÇÃO</SelectItem>
-                                        <SelectItem value="401009-MANUTENÇÃO">401009-MANUTENÇÃO</SelectItem>
-                                        <SelectItem value="401010-OPEX">401010-OPEX</SelectItem>
-                                    </SelectContent>
-                                </Select>
                             </div>
                         </div>
                     </CardContent>
@@ -1000,66 +936,111 @@ export default function Admin() {
                         </TabsTrigger>
                     </TabsList>
 
-                    <TabsContent value={activeTab} className="space-y-4">
-                        {currentAgendamentos.length === 0 ? (
-                            <Card>
-                                <CardContent className="p-12 text-center">
-                                    <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                                    <h3 className="text-lg font-medium text-gray-900 mb-2">Nenhum agendamento encontrado</h3>
-                                    <p className="text-gray-600">Não há agendamentos que correspondam aos filtros selecionados.</p>
-                                </CardContent>
-                            </Card>
-                        ) : (
-                            <>
-                                <div
-                                    className={viewMode === "grid" ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" : "space-y-4"}
-                                >
-                                    {currentAgendamentos.map(renderAgendamentoCard)}
-                                </div>
-
-                                {totalPages > 1 && (
-                                    <div className="flex items-center justify-between">
-                                        <div className="text-sm text-gray-600">
-                                            Mostrando {startIndex + 1} a {Math.min(endIndex, filteredAgendamentos.length)} de{" "}
-                                            {filteredAgendamentos.length} agendamentos
-                                        </div>
-                                        <div className="flex items-center gap-2">
-                                            <Button
-                                                variant="outline"
-                                                size="sm"
-                                                onClick={() => setCurrentPage(currentPage - 1)}
-                                                disabled={currentPage === 1}
-                                            >
-                                                <ChevronLeft className="h-4 w-4" />
-                                                Anterior
-                                            </Button>
-                                            <div className="flex items-center gap-1">
-                                                {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                                                    <Button
-                                                        key={page}
-                                                        variant={currentPage === page ? "default" : "outline"}
-                                                        size="sm"
-                                                        onClick={() => setCurrentPage(page)}
-                                                        className="w-8 h-8 p-0"
-                                                    >
-                                                        {page}
-                                                    </Button>
-                                                ))}
-                                            </div>
-                                            <Button
-                                                variant="outline"
-                                                size="sm"
-                                                onClick={() => setCurrentPage(currentPage + 1)}
-                                                disabled={currentPage === totalPages}
-                                            >
-                                                Próximo
-                                                <ChevronRight className="h-4 w-4" />
-                                            </Button>
-                                        </div>
+                    <TabsContent value={activeTab}>
+                        <Card>
+                            <CardContent className="p-0">
+                                {currentAgendamentos.length === 0 ? (
+                                    <div className="p-12 text-center">
+                                        <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                                        <h3 className="text-lg font-medium text-gray-900 mb-2">Nenhum agendamento encontrado</h3>
+                                        <p className="text-gray-600">Não há agendamentos que correspondam aos filtros selecionados.</p>
                                     </div>
+                                ) : (
+                                    <>
+                                        <div className="overflow-x-auto custom-scrollbar">
+                                            <Table>
+                                                <TableHeader>
+                                                    <TableRow>
+                                                        {visibleColumns.map((colKey) => {
+                                                            const col = allColumns[colKey]
+                                                            if (!col) return null
+                                                            return (
+                                                                <TableHead
+                                                                    key={colKey}
+                                                                    className={`${col.sortable ? "cursor-pointer" : ""} ${
+                                                                        col.sticky ? "sticky right-0 bg-white rounded-r-lg" : ""
+                                                                    }`}
+                                                                    style={{ minWidth: col.minWidth }}
+                                                                    onClick={() => col.sortable && handleSort(colKey)}
+                                                                >
+                                                                    {col.label}{" "}
+                                                                    {col.sortable && sortConfig.key === colKey && (sortConfig.direction === "asc" ? "↑" : "↓")}
+                                                                </TableHead>
+                                                            )
+                                                        })}
+                                                    </TableRow>
+                                                </TableHeader>
+                                                <TableBody>
+                                                    {currentAgendamentos.map((agendamento) => (
+                                                        <TableRow key={agendamento.id} className="hover:bg-gray-50">
+                                                            {visibleColumns.map((colKey) => {
+                                                                const col = allColumns[colKey]
+                                                                return col ? col.cell(agendamento) : null
+                                                            })}
+                                                        </TableRow>
+                                                    ))}
+                                                </TableBody>
+                                            </Table>
+                                        </div>
+
+                                        {totalPages > 1 && (
+                                            <div className="flex items-center justify-between p-4 border-t">
+                                                <div className="text-sm text-gray-600">
+                                                    Mostrando {startIndex + 1} a {Math.min(endIndex, filteredAgendamentos.length)} de{" "}
+                                                    {filteredAgendamentos.length} agendamentos
+                                                </div>
+                                                <div className="flex items-center gap-2">
+                                                    <Button
+                                                        variant="outline"
+                                                        size="sm"
+                                                        onClick={() => setCurrentPage(currentPage - 1)}
+                                                        disabled={currentPage === 1}
+                                                    >
+                                                        <ChevronLeft className="h-4 w-4" />
+                                                        Anterior
+                                                    </Button>
+                                                    <div className="flex items-center gap-1">
+                                                        {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                                                            let pageNum
+                                                            if (totalPages <= 5) {
+                                                                pageNum = i + 1
+                                                            } else if (currentPage <= 3) {
+                                                                pageNum = i + 1
+                                                            } else if (currentPage >= totalPages - 2) {
+                                                                pageNum = totalPages - 4 + i
+                                                            } else {
+                                                                pageNum = currentPage - 2 + i
+                                                            }
+
+                                                            return (
+                                                                <Button
+                                                                    key={pageNum}
+                                                                    variant={currentPage === pageNum ? "default" : "outline"}
+                                                                    size="sm"
+                                                                    onClick={() => setCurrentPage(pageNum)}
+                                                                    className="w-8 h-8 p-0"
+                                                                >
+                                                                    {pageNum}
+                                                                </Button>
+                                                            )
+                                                        })}
+                                                    </div>
+                                                    <Button
+                                                        variant="outline"
+                                                        size="sm"
+                                                        onClick={() => setCurrentPage(currentPage + 1)}
+                                                        disabled={currentPage === totalPages}
+                                                    >
+                                                        Próximo
+                                                        <ChevronRight className="h-4 w-4" />
+                                                    </Button>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </>
                                 )}
-                            </>
-                        )}
+                            </CardContent>
+                        </Card>
                     </TabsContent>
                 </Tabs>
             </main>
@@ -1068,6 +1049,14 @@ export default function Admin() {
                 agendamento={selectedAgendamento}
                 isOpen={detailModalOpen}
                 onClose={() => setDetailModalOpen(false)}
+            />
+
+            <AdvancedFiltersModal
+                isOpen={advancedFiltersOpen}
+                onClose={() => setAdvancedFiltersOpen(false)}
+                filters={filters}
+                onFiltersChange={setFilters}
+                agendamentos={agendamentos}
             />
 
             <ErrorModal

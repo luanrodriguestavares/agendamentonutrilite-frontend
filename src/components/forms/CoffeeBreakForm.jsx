@@ -11,6 +11,7 @@ import { TIMES_SETORES, CENTROS_CUSTO, validarCoffeeBreak } from "../../utils/va
 const CoffeeBreakForm = ({ dados, onChange, onError }) => {
     const [formData, setFormData] = useState({
         timeSetor: "",
+        turno: "",
         cardapio: "",
         quantidade: "",
         centroCusto: "",
