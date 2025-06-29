@@ -5,7 +5,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Checkbox } from "@/components/ui/checkbox"
 import { DatePicker } from "@/components/ui/date-picker"
 import { Calendar, Clock, Building, Utensils, FileText, Users } from "lucide-react"
-import { TIMES_SETORES, validarHomeOffice } from "../../utils/validacoes-agendamento"
+import { TIMES_SETORES } from "../../utils/validacoes-agendamento"
 
 const HomeOfficeForm = ({ dados, onChange, onError }) => {
     const [formData, setFormData] = useState({
@@ -56,7 +56,7 @@ const HomeOfficeForm = ({ dados, onChange, onError }) => {
                 if (agora > limite) {
                     onError(
                         "Horário limite excedido",
-                        "Em sextas-feiras, agendamentos para fins de semana devem ser feitos até às 09:00h."
+                        "Em sextas-feiras, agendamentos para fins de semana devem ser feitos até às 09:00h.",
                     )
                     return false
                 }
@@ -70,24 +70,18 @@ const HomeOfficeForm = ({ dados, onChange, onError }) => {
 
             if (formData.turno === "A" || formData.turno === "ADM") {
                 if (agora > limiteAlmoco && formData.refeicoes.includes("Almoço")) {
-                    onError(
-                        "Horário limite excedido",
-                        "O horário limite para agendamento de almoço é até 07:30h do mesmo dia."
-                    )
+                    onError("Horário limite excedido", "O horário limite para agendamento de almoço é até 07:30h do mesmo dia.")
                     return false
                 }
                 if (agora > limiteLanche && formData.refeicoes.includes("Lanche")) {
-                    onError(
-                        "Horário limite excedido",
-                        "O horário limite para agendamento de lanche é até 09:00h do mesmo dia."
-                    )
+                    onError("Horário limite excedido", "O horário limite para agendamento de lanche é até 09:00h do mesmo dia.")
                     return false
                 }
             } else if (formData.turno === "B") {
                 if (agora > limiteAlmoco) {
                     onError(
                         "Horário limite excedido",
-                        "O horário limite para agendamento de jantar e ceia é até 07:30h do mesmo dia."
+                        "O horário limite para agendamento de jantar e ceia é até 07:30h do mesmo dia.",
                     )
                     return false
                 }
@@ -216,20 +210,25 @@ const HomeOfficeForm = ({ dados, onChange, onError }) => {
                         Refeições:
                     </Label>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 p-4 bg-gray-50 rounded-lg">
-                        {getRefeicoesPorTurno().map((refeicao) => (
-                            <div key={refeicao} className="flex items-center space-x-2">
-                                <Checkbox
-                                    id={`checkbox${refeicao}`}
-                                    checked={formData.refeicoes.includes(refeicao)}
-                                    onCheckedChange={(checked) => handleRefeicaoChange(refeicao, checked)}
-                                    className="data-[state=checked]:bg-emerald-600 data-[state=checked]:border-emerald-600"
-                                    required
-                                />
-                                <Label htmlFor={`checkbox${refeicao}`} className="cursor-pointer">
-                                    {refeicao}
-                                </Label>
-                            </div>
-                        ))}
+                        {getRefeicoesPorTurno().map((refeicao) => {
+
+                            const isRequired = formData.turno === "ADM" ? refeicao === "Almoço" : true
+
+                            return (
+                                <div key={refeicao} className="flex items-center space-x-2">
+                                    <Checkbox
+                                        id={`checkbox${refeicao}`}
+                                        checked={formData.refeicoes.includes(refeicao)}
+                                        onCheckedChange={(checked) => handleRefeicaoChange(refeicao, checked)}
+                                        className="data-[state=checked]:bg-emerald-600 data-[state=checked]:border-emerald-600"
+                                    />
+                                    <Label htmlFor={`checkbox${refeicao}`} className="cursor-pointer">
+                                        {refeicao}
+                                        {!isRequired && <span className="text-gray-500 text-xs ml-1"></span>}
+                                    </Label>
+                                </div>
+                            )
+                        })}
                     </div>
                 </div>
             )}
@@ -241,9 +240,7 @@ const HomeOfficeForm = ({ dados, onChange, onError }) => {
                         Data Início:
                     </Label>
                     <DatePicker date={formData.dataInicio} onChange={(date) => handleDataChange("dataInicio", date)} />
-                    {formData.dataInicio && (
-                        <p className="text-xs text-gray-500">{getCategoriaDia(formData.dataInicio)}</p>
-                    )}
+                    {formData.dataInicio && <p className="text-xs text-gray-500">{getCategoriaDia(formData.dataInicio)}</p>}
                 </div>
 
                 <div className="space-y-2">
@@ -262,7 +259,11 @@ const HomeOfficeForm = ({ dados, onChange, onError }) => {
                         <Building className="h-4 w-4 text-emerald-600" />
                         Refeitório:
                     </Label>
-                    <Select value={formData.refeitorio} onValueChange={(value) => handleInputChange("refeitorio", value)} required>
+                    <Select
+                        value={formData.refeitorio}
+                        onValueChange={(value) => handleInputChange("refeitorio", value)}
+                        required
+                    >
                         <SelectTrigger id="selectRefeitorio" className="w-full">
                             <SelectValue placeholder="Selecione" />
                         </SelectTrigger>

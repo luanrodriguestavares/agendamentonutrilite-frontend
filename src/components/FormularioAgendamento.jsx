@@ -1,3 +1,4 @@
+
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -22,9 +23,29 @@ const FormularioAgendamento = ({ formData, setFormData, onSubmit }) => {
 	const [errorTitle, setErrorTitle] = useState("")
 	const [dadosEspecificos, setDadosEspecificos] = useState({})
 
+	const tiposAgendamentoPorServico = {
+		Refeição: [
+			{ value: "Home Office", label: "Agendamento Home Office" },
+			{ value: "Administrativo - Lanche", label: "Solicitação Lanche" },
+			{ value: "Agendamento para Time", label: "Agendamento para Time" },
+			{ value: "Agendamento para Visitante", label: "Agendamento para Visitante" },
+		],
+		Transporte: [{ value: "Rota Extra", label: "Rota Extra" }],
+		"Serviço Serlares": [{ value: "Coffee Break", label: "Solicitação de Coffee Break" }],
+	}
+
 	const handleInputChange = (e) => {
 		const { name, value } = e.target
 		setFormData((prev) => ({ ...prev, [name]: value }))
+	}
+
+	const handleTipoServicoChange = (value) => {
+		setFormData((prev) => ({
+			...prev,
+			tipoServico: value,
+			tipoAgendamento: "",
+		}))
+		setDadosEspecificos({})
 	}
 
 	const handleTipoAgendamentoChange = (value) => {
@@ -102,6 +123,11 @@ const FormularioAgendamento = ({ formData, setFormData, onSubmit }) => {
 			default:
 				return null
 		}
+	}
+
+	const getOpcoesAgendamento = () => {
+		if (!formData.tipoServico) return []
+		return tiposAgendamentoPorServico[formData.tipoServico] || []
 	}
 
 	return (
@@ -266,11 +292,7 @@ const FormularioAgendamento = ({ formData, setFormData, onSubmit }) => {
 							<Utensils className="h-4 w-4 text-emerald-600" />
 							Tipo de Serviço:
 						</Label>
-						<Select
-							name="tipoServico"
-							value={formData.tipoServico || ""}
-							onValueChange={(value) => setFormData((prev) => ({ ...prev, tipoServico: value }))}
-						>
+						<Select name="tipoServico" value={formData.tipoServico || ""} onValueChange={handleTipoServicoChange}>
 							<SelectTrigger id="selectTipoServico" className="w-full">
 								<SelectValue placeholder="Selecione" />
 							</SelectTrigger>
@@ -287,17 +309,25 @@ const FormularioAgendamento = ({ formData, setFormData, onSubmit }) => {
 							<FileText className="h-4 w-4 text-emerald-600" />
 							Tipo de Agendamento:
 						</Label>
-						<Select name="tipoAgendamento" value={formData.tipoAgendamento} onValueChange={handleTipoAgendamentoChange}>
+						<Select
+							name="tipoAgendamento"
+							value={formData.tipoAgendamento}
+							onValueChange={handleTipoAgendamentoChange}
+							disabled={!formData.tipoServico}
+						>
 							<SelectTrigger id="tipoAgendamento" className="w-full">
-								<SelectValue placeholder="Selecione o tipo de agendamento" />
+								<SelectValue
+									placeholder={
+										!formData.tipoServico ? "Primeiro selecione o tipo de serviço" : "Selecione o tipo de agendamento"
+									}
+								/>
 							</SelectTrigger>
 							<SelectContent>
-								<SelectItem value="Agendamento para Time">Agendamento para Time</SelectItem>
-								<SelectItem value="Home Office">Agendamento Home Office</SelectItem>
-								<SelectItem value="Administrativo - Lanche">Solicitação Lanche</SelectItem>
-								<SelectItem value="Agendamento para Visitante">Agendamento para Visitante</SelectItem>
-								<SelectItem value="Coffee Break">Solicitação de Coffee Break</SelectItem>
-								<SelectItem value="Rota Extra">Rota Extra</SelectItem>
+								{getOpcoesAgendamento().map((opcao) => (
+									<SelectItem key={opcao.value} value={opcao.value}>
+										{opcao.label}
+									</SelectItem>
+								))}
 							</SelectContent>
 						</Select>
 					</div>

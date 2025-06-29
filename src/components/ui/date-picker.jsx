@@ -11,12 +11,10 @@ import {
 	PopoverTrigger,
 } from "@/components/ui/popover"
 
-export function DatePicker({ date, onChange, className, placeholder = "Selecione uma data", disabled }) {
+export function DatePicker({ date, onChange, className, placeholder = "Selecione uma data", disabled, disablePast = true }) {
 	const [open, setOpen] = React.useState(false)
 
-	const disabledDays = {
-		before: startOfDay(new Date())
-	}
+	const disabledDays = disablePast ? { before: startOfDay(new Date()) } : undefined
 
 	return (
 		<Popover open={open} onOpenChange={setOpen}>
@@ -64,4 +62,4 @@ export function DatePicker({ date, onChange, className, placeholder = "Selecione
 			</PopoverContent>
 		</Popover>
 	)
-} 
+}

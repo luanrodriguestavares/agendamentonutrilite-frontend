@@ -88,6 +88,33 @@ export default function AgendamentoDetailModal({ agendamento, isOpen, onClose })
 		}
 	}
 
+	const formatRefeicoes = (refeicoes) => {
+		if (!refeicoes) return null
+
+		if (typeof refeicoes === "string" && refeicoes.startsWith("[")) {
+			try {
+				const arr = JSON.parse(refeicoes)
+				if (Array.isArray(arr)) return arr.join(", ")
+				return arr.toString()
+			} catch {
+				return refeicoes
+			}
+		}
+
+		if (Array.isArray(refeicoes)) {
+			if (refeicoes.length === 1) return refeicoes[0]
+			const limp = refeicoes.map(r => r.trim())
+			if (limp.includes("Almoço") && limp.includes("Lanche")) return "Almoço/Lanche"
+			if (limp.includes("Jantar") && limp.includes("Ceia")) return "Jantar/Ceia"
+			return limp.join(", ")
+		}
+
+		// Se for string simples
+		if (typeof refeicoes === "string") return refeicoes
+
+		return null
+	}
+
 	const getAgendamentoDisplayDate = (agendamento) => {
 		try {
 			switch (agendamento.tipoAgendamento) {
@@ -240,7 +267,7 @@ export default function AgendamentoDetailModal({ agendamento, isOpen, onClose })
 				const dataVisita = agendamento.data
 					? format(adjustDate(agendamento.data), "dd/MM/yyyy", { locale: ptBR })
 					: "Data não informada"
-				resumo += ` para o dia ${dataVisita}, com ${agendamento.quantidadeVisitantes || 0} visitantes`
+				resumo += ` para o dia ${dataVisita}, com ${agendamento.quantidadeVisitantes || "quantidade não informada"} visitantes`
 				if (agendamento.refeitorio) {
 					resumo += ` no refeitório da ${agendamento.refeitorio}`
 				}
@@ -495,6 +522,7 @@ export default function AgendamentoDetailModal({ agendamento, isOpen, onClose })
 
 						{agendamento.tipoAgendamento === "Home Office" && (
 							<div className="space-y-4">
+								{console.log("Home Office - Refeições:", agendamento.refeicoes, "Tipo:", typeof agendamento.refeicoes)}
 								<div className="bg-blue-50 p-4 rounded-lg">
 									<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 										<div className="flex items-center gap-3">
@@ -547,16 +575,17 @@ export default function AgendamentoDetailModal({ agendamento, isOpen, onClose })
 									</div>
 								</div>
 
-								{agendamento.refeicoes && Array.isArray(agendamento.refeicoes) && agendamento.refeicoes.length > 0 && (
+								{formatRefeicoes(agendamento.refeicoes) && (
 									<div className="bg-white border border-blue-200 p-4 rounded-lg">
 										<h4 className="text-sm font-medium text-blue-800 mb-3">Refeições Solicitadas</h4>
-										<div className="flex flex-wrap gap-2">
-											{agendamento.refeicoes.map((refeicao, index) => (
-												<Badge key={index} variant="outline" className="text-blue-700 border-blue-300 bg-blue-50">
-													<Utensils className="h-3 w-3 mr-1" />
-													{refeicao}
-												</Badge>
-											))}
+										<div className="grid grid-cols-1 sm:grid-cols-1 gap-3">
+											<div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
+												<div className="flex items-center gap-2">
+													<Utensils className="h-4 w-4 text-blue-600" />
+													<span className="text-sm font-medium">{formatRefeicoes(agendamento.refeicoes)}</span>
+												</div>
+												<span className="text-lg font-bold text-blue-700">1</span>
+											</div>
 										</div>
 									</div>
 								)}
@@ -636,7 +665,7 @@ export default function AgendamentoDetailModal({ agendamento, isOpen, onClose })
 											</div>
 										</div>
 									)}
-									{agendamento.quantidadeVisitantes && (
+									{agendamento.quantidadeVisitantes !== undefined && agendamento.quantidadeVisitantes !== null && (
 										<div className="flex items-center gap-3">
 											<Users className="h-4 w-4 text-purple-600" />
 											<div>
@@ -856,7 +885,7 @@ export default function AgendamentoDetailModal({ agendamento, isOpen, onClose })
 								</h3>
 								<div className="bg-red-50 border border-red-200 p-4 rounded-lg">
 									<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-										{agendamento.motivoCancelamento && (
+										{agendamento.motivoCancelamento ? (
 											<div className="flex items-center gap-3">
 												<FileText className="h-4 w-4 text-red-600" />
 												<div>
@@ -864,6 +893,8 @@ export default function AgendamentoDetailModal({ agendamento, isOpen, onClose })
 													<p className="font-medium">{agendamento.motivoCancelamento}</p>
 												</div>
 											</div>
+										) : (
+											<span className="text-red-700 text-sm">Este agendamento foi cancelado.</span>
 										)}
 									</div>
 								</div>

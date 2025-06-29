@@ -4,8 +4,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { DatePicker } from "@/components/ui/date-picker"
-import { Calendar, Building, Users, User, DollarSign, FileText, Clock, Coffee } from "lucide-react"
-import { CENTROS_CUSTO } from "../../utils/validacoes-agendamento"
+import { Calendar, Building, Users, User, FileText, Clock, Coffee } from "lucide-react"
 
 const AgendamentoVisitanteForm = ({ dados, onChange, onError }) => {
     const [formData, setFormData] = useState({
@@ -52,10 +51,7 @@ const AgendamentoVisitanteForm = ({ dados, onChange, onError }) => {
             limite.setHours(7, 30, 0, 0)
 
             if (agora > limite) {
-                onError(
-                    "Horário limite excedido",
-                    "O horário limite para agendamento de visitante no mesmo dia é até 07:30h."
-                )
+                onError("Horário limite excedido", "O horário limite para agendamento de visitante no mesmo dia é até 07:30h.")
                 return false
             }
         }
@@ -89,16 +85,33 @@ const AgendamentoVisitanteForm = ({ dados, onChange, onError }) => {
     return (
         <div className="space-y-6 animate-in fade-in-50 duration-300">
             <div className="space-y-2">
-                <Label htmlFor="nomeVisitante" className="flex items-center gap-2">
+                <Label htmlFor="nomeAcompanhante" className="flex items-center gap-2">
                     <User className="h-4 w-4 text-emerald-600" />
-                    Nome do Visitante:
+                    Nome do Acompanhante:
                 </Label>
                 <Input
-                    id="nomeVisitante"
-                    value={formData.nomeVisitante}
-                    onChange={(e) => handleInputChange("nomeVisitante", e.target.value)}
+                    id="nomeAcompanhante"
+                    value={formData.acompanhante}
+                    onChange={(e) => handleInputChange("acompanhante", e.target.value)}
                     className="w-full"
-                    placeholder="Digite o nome do visitante"
+                    placeholder="Digite o nome do acompanhante"
+                    required
+                />
+            </div>
+
+            <div className="space-y-2">
+                <Label htmlFor="quantidadeVisitantes" className="flex items-center gap-2">
+                    <Users className="h-4 w-4 text-emerald-600" />
+                    Quantidade de Visitantes:
+                </Label>
+                <Input
+                    id="quantidadeVisitantes"
+                    type="number"
+                    min="1"
+                    value={formData.quantidadeVisitantes}
+                    onChange={(e) => handleInputChange("quantidadeVisitantes", e.target.value)}
+                    className="w-full"
+                    placeholder="Digite a quantidade de visitantes"
                     required
                 />
             </div>
@@ -125,7 +138,11 @@ const AgendamentoVisitanteForm = ({ dados, onChange, onError }) => {
                         <Building className="h-4 w-4 text-emerald-600" />
                         Refeitório:
                     </Label>
-                    <Select value={formData.refeitorio} onValueChange={(value) => handleInputChange("refeitorio", value)} required>
+                    <Select
+                        value={formData.refeitorio}
+                        onValueChange={(value) => handleInputChange("refeitorio", value)}
+                        required
+                    >
                         <SelectTrigger id="selectRefeitorio" className="w-full">
                             <SelectValue placeholder="Selecione" />
                         </SelectTrigger>
@@ -150,13 +167,7 @@ const AgendamentoVisitanteForm = ({ dados, onChange, onError }) => {
                     <Coffee className="h-4 w-4 text-emerald-600" />
                     Refeições:
                 </Label>
-                <Input
-                    id="refeicoes"
-                    value={formData.refeicoes}
-                    disabled
-                    className="w-full bg-gray-100"
-                    placeholder="Almoço"
-                />
+                <Input id="refeicoes" value={formData.refeicoes} disabled className="w-full bg-gray-100" placeholder="Almoço" />
             </div>
 
             <div className="space-y-2">

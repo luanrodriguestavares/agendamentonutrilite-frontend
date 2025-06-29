@@ -33,12 +33,16 @@ export const getAgendamento = async (id) => {
 };
 
 export const updateAgendamento = async (id, data) => {
-    const response = await api.put(`/agendamentos/${id}`, data);
+    const response = await api.put(`/agendamentos/${id}`, data, {
+        timeout: 30000 // 30 segundos de timeout
+    });
     return response;
 };
 
 export const cancelAgendamento = async (id, data) => {
-    const response = await api.put(`/agendamentos/${id}/cancel`, data);
+    const response = await api.put(`/agendamentos/${id}/cancel`, data, {
+        timeout: 30000 // 30 segundos de timeout
+    });
     return response.data;
 };
 
