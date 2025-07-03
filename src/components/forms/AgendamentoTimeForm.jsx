@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { DatePicker } from "@/components/ui/date-picker"
 import { Switch } from "@/components/ui/switch"
-import { Users, Calendar, Clock, FileText, DollarSign, AlertTriangle } from "lucide-react"
+import { Users, Calendar, Clock, Building, FileText, DollarSign, AlertTriangle } from "lucide-react"
 import { TIMES_SETORES, CENTROS_CUSTO, validarAgendamentoTime } from "../../utils/validacoes-agendamento"
 
 const AgendamentoTimeForm = ({ dados, onChange, onError }) => {
@@ -20,6 +20,7 @@ const AgendamentoTimeForm = ({ dados, onChange, onError }) => {
         quantidadeAlmocoLanche: "",
         quantidadeJantarCeia: "",
         quantidadeLancheExtra: "",
+        refeitorio: "",
         observacao: "",
         ...dados,
     })
@@ -361,7 +362,27 @@ const AgendamentoTimeForm = ({ dados, onChange, onError }) => {
                     />
                 </div>
             )}
-
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                    <Label htmlFor="selectRefeitorio" className="flex items-center gap-2">
+                        <Building className="h-4 w-4 text-emerald-600" />
+                        Refeitório:
+                    </Label>
+                    <Select
+                        value={formData.refeitorio}
+                        onValueChange={(value) => handleInputChange("refeitorio", value)}
+                        required
+                    >
+                        <SelectTrigger id="selectRefeitorio" className="w-full">
+                            <SelectValue placeholder="Selecione" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="Fazenda">Fazenda</SelectItem>
+                            <SelectItem value="Industria">Indústria</SelectItem>
+                        </SelectContent>
+                    </Select>
+                </div>
+            </div>
             <div className="space-y-2">
                 <Label htmlFor="observacao" className="flex items-center gap-2">
                     <FileText className="h-4 w-4 text-emerald-600" />

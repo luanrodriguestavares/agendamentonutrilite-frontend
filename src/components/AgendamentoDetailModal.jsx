@@ -215,6 +215,10 @@ export default function AgendamentoDetailModal({ agendamento, isOpen, onClose })
 					resumo += `, centro de custo ${agendamento.centroCusto}`
 				}
 
+				if (agendamento.refeitorio) {
+					resumo += `, no refeitório da ${agendamento.refeitorio}`
+				}
+
 				resumo += "."
 				break
 
@@ -285,6 +289,9 @@ export default function AgendamentoDetailModal({ agendamento, isOpen, onClose })
 					? format(adjustDate(agendamento.dataCoffee), "dd/MM/yyyy", { locale: ptBR })
 					: "Data não informada"
 				resumo += ` para o time ${agendamento.timeSetor || "não informado"} para o dia ${dataCoffee}`
+				if (agendamento.turno) {
+					resumo += `, turno ${agendamento.turno}`
+				}
 				if (agendamento.horario) {
 					resumo += ` às ${agendamento.horario}`
 				}
@@ -429,6 +436,15 @@ export default function AgendamentoDetailModal({ agendamento, isOpen, onClose })
 												<div>
 													<span className="text-xs text-emerald-600 uppercase tracking-wide">Turno</span>
 													<p className="font-medium">{agendamento.turno}</p>
+												</div>
+											</div>
+										)}
+										{agendamento.refeitorio && (
+											<div className="flex items-center gap-3">
+												<Building className="h-4 w-4 text-emerald-600" />
+												<div>
+													<span className="text-xs text-emerald-600 uppercase tracking-wide">Refeitório</span>
+													<p className="font-medium">{agendamento.refeitorio}</p>
 												</div>
 											</div>
 										)}
@@ -715,6 +731,15 @@ export default function AgendamentoDetailModal({ agendamento, isOpen, onClose })
 													<p className="font-medium">
 														{format(adjustDate(agendamento.dataCoffee), "dd/MM/yyyy", { locale: ptBR })}
 													</p>
+												</div>
+											</div>
+										)}
+										{agendamento.turno && (
+											<div className="flex items-center gap-3">
+												<Clock className="h-4 w-4 text-pink-600" />
+												<div>
+													<span className="text-xs text-pink-600 uppercase tracking-wide">Turno</span>
+													<p className="font-medium">{agendamento.turno}</p>
 												</div>
 											</div>
 										)}
