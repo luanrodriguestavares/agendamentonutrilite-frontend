@@ -204,6 +204,15 @@ yarn build
 - Minificação de código
 - Assets otimizados
 
+### Servir Build de Produção
+
+```bash
+yarn start
+```
+
+- Servidor local para servir o build
+- Acesso em `http://localhost:3000`
+
 ### Preview do Build
 
 ```bash
@@ -221,6 +230,17 @@ yarn lint
 
 - Verificação de código com ESLint
 - Regras específicas para React
+
+### Testes Automatizados
+
+```bash
+yarn test
+```
+
+- Bateria completa de testes de regras de negócio
+- Validação de horários limite de agendamento e cancelamento
+- Testes para todos os tipos de agendamento
+- Simulação de diferentes cenários e horários
 
 ## Funcionalidades
 
@@ -240,7 +260,7 @@ yarn lint
 - Período (data início e fim)
 - Turno (A, B, ADM)
 - Quantidades por tipo de refeição
-- Opção para feriados
+  - Opção para feriados
 - Refeitório (Fazenda/Indústria)
 
 #### Home Office
@@ -264,16 +284,16 @@ yarn lint
 - Dados do visitante
 - Quantidade de visitantes
 - Acompanhante responsável
-- Data da visita
-- Refeitório
-- Centro de custo
+  - Data da visita
+  - Refeitório
+  - Centro de custo
 
 #### Coffee Break
 
 - Data e horário específico
 - Cardápio personalizado (5 tipos)
-- Quantidade de pessoas
-- Local de entrega
+  - Quantidade de pessoas
+  - Local de entrega
 - Rateio (Sim/Não)
 - Centro de custo
 
@@ -281,7 +301,7 @@ yarn lint
 
 - Período (data início e fim)
 - Quantidade por cidade (Tianguá/Ubajara)
-- Centro de custo
+  - Centro de custo
 - Categoria do dia (Feriado/Sábado/Domingo)
 
 ### 3. Sistema de Autenticação
@@ -510,10 +530,12 @@ yarn lint
 ### Scripts Disponíveis
 
 ```bash
-yarn dev          # Desenvolvimento
-yarn build        # Build de produção
-yarn preview      # Preview do build
+yarn dev          # Desenvolvimento com hot-reload
+yarn build        # Build de produção otimizado
+yarn start        # Servir build de produção (porta 3000)
+yarn preview      # Preview do build (porta 4173)
 yarn lint         # Verificação de código
+yarn test         # Executar testes automatizados
 ```
 
 ### Estrutura de Desenvolvimento
@@ -522,3 +544,175 @@ yarn lint         # Verificação de código
 - **ESLint** em tempo real
 - **TypeScript** support
 - **Debug** configurado
+
+## Deploy em Produção
+
+### 1. Build de Produção
+
+```bash
+# Gere o build otimizado
+yarn build
+
+# O build será criado na pasta dist/
+```
+
+### 2. Configuração de Variáveis de Produção
+
+```bash
+# Copie o arquivo de exemplo
+cp .env.example .env
+
+# Configure para produção
+VITE_API_URL=https://api.seu-dominio.com
+VITE_APP_TITLE=Sistema de Agendamento Nutrilite
+VITE_APP_VERSION=1.0.0
+```
+
+### 3. Deploy em Servidor Web
+
+#### Opção A: Servidor Nginx
+
+```bash
+# Instale o Nginx
+sudo apt update
+sudo apt install nginx
+
+# Copie os arquivos do build
+sudo cp -r dist/* /var/www/html/
+
+# Configure o Nginx
+sudo nano /etc/nginx/sites-available/nutrilite-frontend
+```
+
+Configuração do Nginx:
+
+```nginx
+server {
+    listen 80;
+    server_name seu-dominio.com;
+    root /var/www/html;
+    index index.html;
+
+    # Gzip compression
+    gzip on;
+    gzip_vary on;
+    gzip_min_length 1024;
+    gzip_types text/plain text/css text/xml text/javascript application/javascript application/xml+rss application/json;
+
+    # Cache static assets
+    location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg)$ {
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+    }
+
+    # Handle React Router
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+
+    # Security headers
+    add_header X-Frame-Options "SAMEORIGIN" always;
+    add_header X-XSS-Protection "1; mode=block" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header Referrer-Policy "no-referrer-when-downgrade" always;
+    add_header Content-Security-Policy "default-src 'self' http: https: data: blob: 'unsafe-inline'" always;
+}
+```
+
+```bash
+# Ative o site
+sudo ln -s /etc/nginx/sites-available/nutrilite-frontend /etc/nginx/sites-enabled/
+sudo nginx -t
+sudo systemctl reload nginx
+```
+
+#### Opção B: Servidor Node.js
+
+```bash
+# Instale o serve globalmente
+npm install -g serve
+
+# Sirva o build
+serve -s dist -l 3000
+```
+
+#### Opção C: Vercel/Netlify
+
+```bash
+# Para Vercel
+npm install -g vercel
+vercel --prod
+
+# Para Netlify
+npm install -g netlify-cli
+netlify deploy --prod --dir=dist
+```
+
+### 4. SSL/HTTPS (Let's Encrypt)
+
+```bash
+# Instale o Certbot
+sudo apt install certbot python3-certbot-nginx
+
+# Obtenha o certificado
+sudo certbot --nginx -d seu-dominio.com
+```
+
+### 5. Configuração de CORS no Backend
+
+Certifique-se de que o backend está configurado para aceitar requisições do seu domínio:
+
+```javascript
+// No backend (src/app.js)
+app.use(
+  cors({
+    origin: ["https://seu-dominio.com", "http://localhost:5173"],
+    credentials: true,
+  })
+);
+```
+
+## 🧪 Sistema de Testes Automatizados
+
+### Visão Geral
+
+O sistema inclui uma bateria completa de testes automatizados que valida todas as regras de negócio de agendamento e cancelamento, incluindo:
+
+- **Validações de horário** para cada tipo de agendamento
+- **Regras de cancelamento** com limites específicos
+- **Cenários de fim de semana e feriados**
+- **Simulação de diferentes horários** para testar limites
+
+### Como Executar
+
+```bash
+# Execução rápida
+yarn test
+
+# Execução manual
+node src/tests/runTests.js
+```
+
+### Tipos de Teste
+
+- **Agendamento para Time**: Dias úteis, fins de semana, feriados
+- **Home Office**: Almoço, lanche, jantar/ceia
+- **Solicitação de Lanche**: Mesmo dia, próximo dia
+- **Coffee Break**: Dia anterior, mesmo dia
+- **Rota Extra**: Sexta-feira, fins de semana
+- **Cancelamentos**: Todos os tipos com horários limite
+
+### Resultados
+
+- **✅ Verde**: Teste passou (comportamento esperado)
+- **❌ Vermelho**: Teste falhou (verificar regra de negócio)
+- **💥 Erro**: Problema técnico no teste
+
+### Documentação Completa
+
+Veja `TESTES.md` para documentação detalhada dos testes, incluindo:
+
+- Regras de negócio testadas
+- Cenários específicos
+- Como adicionar novos testes
+- Troubleshooting
