@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card } from "@/components/ui/card"
 import { Loader2, User, Mail, FileText, Utensils } from "lucide-react"
 import { Separator } from "@/components/ui/separator"
+import { useToast } from "@/components/ui/use-toast"
 
 import AgendamentoTimeForm from "./forms/AgendamentoTimeForm"
 import HomeOfficeForm from "./forms/HomeOfficeForm"
@@ -15,13 +16,18 @@ import AgendamentoVisitanteForm from "./forms/AgendamentoVisitanteForm"
 import CoffeeBreakForm from "./forms/CoffeeBreakForm"
 import RotaExtraForm from "./forms/RotaExtraForm"
 import ErrorModal from "./ErrorModal"
+import Alertas from "./Alertas"
+import { validarFormulario } from "@/utils/validacoes-formulario"
 
 const FormularioAgendamento = ({ formData, setFormData, onSubmit }) => {
+	const { toast } = useToast()
 	const [isSubmitting, setIsSubmitting] = useState(false)
 	const [errorModalOpen, setErrorModalOpen] = useState(false)
 	const [errorMessage, setErrorMessage] = useState("")
 	const [errorTitle, setErrorTitle] = useState("")
 	const [dadosEspecificos, setDadosEspecificos] = useState({})
+	const [errosValidacao, setErrosValidacao] = useState([])
+	const [mensagemSucesso, setMensagemSucesso] = useState("")
 
 	const tiposAgendamentoPorServico = {
 		Refeição: [
@@ -46,6 +52,8 @@ const FormularioAgendamento = ({ formData, setFormData, onSubmit }) => {
 			tipoAgendamento: "",
 		}))
 		setDadosEspecificos({})
+		setErrosValidacao([])
+		setMensagemSucesso("")
 	}
 
 	const handleTipoAgendamentoChange = (value) => {
@@ -54,6 +62,8 @@ const FormularioAgendamento = ({ formData, setFormData, onSubmit }) => {
 			tipoAgendamento: value,
 		}))
 		setDadosEspecificos({})
+		setErrosValidacao([])
+		setMensagemSucesso("")
 	}
 
 	const handleDadosEspecificosChange = (dados) => {
@@ -66,19 +76,25 @@ const FormularioAgendamento = ({ formData, setFormData, onSubmit }) => {
 		setErrorModalOpen(true)
 	}
 
-	const validarCamposBasicos = () => {
-		if (!formData.nome || !formData.email || !formData.tipoAgendamento || !formData.tipoServico) {
-			showError("Campos obrigatórios", "Por favor, preencha todos os campos obrigatórios.")
-			return false
-		}
-		return true
-	}
-
 	const handleSubmit = async (e) => {
 		e.preventDefault()
 		setIsSubmitting(true)
+		setErrosValidacao([])
+		setMensagemSucesso("")
 
-		if (!validarCamposBasicos()) {
+		const dadosCompletos = {
+			...formData,
+			...dadosEspecificos,
+		}
+
+		const resultadoValidacao = validarFormulario(dadosCompletos)
+
+		if (!resultadoValidacao.valido) {
+			setErrosValidacao(resultadoValidacao.erros)
+
+			const mensagemFormatada = resultadoValidacao.erros.join('\n')
+			showError("Erro de Validação", mensagemFormatada)
+
 			setIsSubmitting(false)
 			return
 		}
@@ -93,8 +109,11 @@ const FormularioAgendamento = ({ formData, setFormData, onSubmit }) => {
 			}
 
 			await onSubmit(payload)
+			setMensagemSucesso("Formulário enviado com sucesso!")
 		} catch (error) {
 			console.error("Erro ao enviar formulário:", error)
+			setErrosValidacao(["Erro ao enviar formulário. Tente novamente."])
+			showError("Erro no Envio", "Ocorreu um erro ao enviar o formulário. Tente novamente.")
 		} finally {
 			setIsSubmitting(false)
 		}
@@ -136,6 +155,14 @@ const FormularioAgendamento = ({ formData, setFormData, onSubmit }) => {
 				Agendamento de Refeições e Transporte
 			</h1>
 			<Separator className="mb-6 bg-gray-300" />
+
+			{mensagemSucesso && (
+				<Alertas
+					tipo="sucesso"
+					mensagens={mensagemSucesso}
+					onClose={() => setMensagemSucesso("")}
+				/>
+			)}
 
 			<Card className="mb-8 overflow-hidden">
 				<div className="bg-emerald-50 border-b px-4 py-3">
@@ -350,7 +377,6 @@ const FormularioAgendamento = ({ formData, setFormData, onSubmit }) => {
 					)}
 				</Button>
 			</div>
-
 			<ErrorModal
 				isOpen={errorModalOpen}
 				onClose={() => setErrorModalOpen(false)}

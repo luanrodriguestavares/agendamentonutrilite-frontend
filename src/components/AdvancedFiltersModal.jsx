@@ -21,21 +21,17 @@ export default function AdvancedFiltersModal({ isOpen, onClose, filters, onFilte
 		setLocalFilters((prev) => ({ ...prev, [key]: value }))
 	}
 
-	// Obter todos os tipos únicos de agendamento
 	const getTiposAgendamento = () => {
 		return [...new Set(agendamentos.map((a) => a.tipoAgendamento).filter(Boolean))].sort()
 	}
 
-	// Função melhorada para conversão de data
 	const dateToString = (date) => {
 		if (!date) return ""
 
-		// Se já é uma string no formato correto, retorna
 		if (typeof date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(date)) {
 			return date
 		}
 
-		// Se é string em outro formato, tenta converter
 		if (typeof date === "string") {
 			const dateObj = new Date(date)
 			if (!isNaN(dateObj.getTime())) {
@@ -44,7 +40,6 @@ export default function AdvancedFiltersModal({ isOpen, onClose, filters, onFilte
 			return ""
 		}
 
-		// Se é objeto Date
 		if (date instanceof Date && !isNaN(date.getTime())) {
 			return date.toISOString().split("T")[0]
 		}
@@ -52,19 +47,15 @@ export default function AdvancedFiltersModal({ isOpen, onClose, filters, onFilte
 		return ""
 	}
 
-	// Função melhorada para conversão de string para Date
 	const stringToDate = (dateString) => {
 		if (!dateString || dateString === "") return null
 
 		try {
-			// Se é uma string no formato YYYY-MM-DD
 			if (typeof dateString === "string" && /^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
 				const [year, month, day] = dateString.split("-").map(Number)
-				// Cria a data no fuso horário local para evitar problemas de timezone
 				return new Date(year, month - 1, day)
 			}
 
-			// Tenta criar Date diretamente
 			const date = new Date(dateString)
 			if (!isNaN(date.getTime())) {
 				return date
@@ -76,38 +67,52 @@ export default function AdvancedFiltersModal({ isOpen, onClose, filters, onFilte
 		return null
 	}
 
-	// Funções para períodos rápidos - corrigidas
 	const getToday = () => {
 		const today = new Date()
-		return today.toISOString().split("T")[0]
+		const year = today.getFullYear()
+		const month = String(today.getMonth() + 1).padStart(2, '0')
+		const day = String(today.getDate()).padStart(2, '0')
+		return `${year}-${month}-${day}`
 	}
 
 	const getWeekStart = () => {
 		const today = new Date()
 		const dayOfWeek = today.getDay()
-		const diff = today.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1) // Segunda-feira
+		const diff = today.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1)
 		const monday = new Date(today)
 		monday.setDate(diff)
-		return monday.toISOString().split("T")[0]
+		const year = monday.getFullYear()
+		const month = String(monday.getMonth() + 1).padStart(2, '0')
+		const day = String(monday.getDate()).padStart(2, '0')
+		return `${year}-${month}-${day}`
 	}
 
 	const getWeekEnd = () => {
 		const today = new Date()
 		const dayOfWeek = today.getDay()
-		const diff = today.getDate() - dayOfWeek + (dayOfWeek === 0 ? 0 : 7) // Domingo
+		const diff = today.getDate() - dayOfWeek + (dayOfWeek === 0 ? 0 : 7)
 		const sunday = new Date(today)
 		sunday.setDate(diff)
-		return sunday.toISOString().split("T")[0]
+		const year = sunday.getFullYear()
+		const month = String(sunday.getMonth() + 1).padStart(2, '0')
+		const day = String(sunday.getDate()).padStart(2, '0')
+		return `${year}-${month}-${day}`
 	}
 
 	const getMonthStart = () => {
 		const today = new Date()
-		return new Date(today.getFullYear(), today.getMonth(), 1).toISOString().split("T")[0]
+		const year = today.getFullYear()
+		const month = String(today.getMonth() + 1).padStart(2, '0')
+		return `${year}-${month}-01`
 	}
 
 	const getMonthEnd = () => {
 		const today = new Date()
-		return new Date(today.getFullYear(), today.getMonth() + 1, 0).toISOString().split("T")[0]
+		const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0)
+		const year = lastDay.getFullYear()
+		const month = String(lastDay.getMonth() + 1).padStart(2, '0')
+		const day = String(lastDay.getDate()).padStart(2, '0')
+		return `${year}-${month}-${day}`
 	}
 
 	const applyQuickPeriodFilter = (type) => {
@@ -134,7 +139,6 @@ export default function AdvancedFiltersModal({ isOpen, onClose, filters, onFilte
 	const applyFilters = () => {
 		const processedFilters = { ...localFilters }
 
-		// Lista de campos de data para processar
 		const dateFields = [
 			"dataInicio",
 			"dataFim",
@@ -147,7 +151,6 @@ export default function AdvancedFiltersModal({ isOpen, onClose, filters, onFilte
 			"periodoFim",
 		]
 
-		// Processa todos os campos de data
 		dateFields.forEach((field) => {
 			if (processedFilters[field]) {
 				processedFilters[field] = dateToString(processedFilters[field])
@@ -156,7 +159,11 @@ export default function AdvancedFiltersModal({ isOpen, onClose, filters, onFilte
 			}
 		})
 
-		console.log("Filtros processados:", processedFilters) // Debug
+		console.log("Filtros de quantidade antes do processamento:", {
+			quantidadeMin: localFilters.quantidadeMin,
+			quantidadeMax: localFilters.quantidadeMax
+		})
+		console.log("Filtros processados:", processedFilters)
 		onFiltersChange(processedFilters)
 		onClose()
 	}
@@ -227,7 +234,7 @@ export default function AdvancedFiltersModal({ isOpen, onClose, filters, onFilte
 
 	return (
 		<Dialog open={isOpen} onOpenChange={onClose}>
-			<DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+			<DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-100 hover:scrollbar-thumb-gray-500">
 				<DialogHeader>
 					<DialogTitle className="flex items-center gap-2">
 						<Filter className="h-5 w-5" />
@@ -283,7 +290,7 @@ export default function AdvancedFiltersModal({ isOpen, onClose, filters, onFilte
 								<div className="space-y-2 md:col-span-2">
 									<Label>Tipos de Agendamento</Label>
 									<div className="space-y-2">
-										<div className="flex flex-wrap gap-2 p-2 border rounded-md min-h-[40px] bg-white">
+										<div className="flex flex-wrap gap-2 p-2 border rounded-md min-h-[40px] bg-white overflow-x-auto scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-100 hover:scrollbar-thumb-gray-500">
 											{(localFilters.tiposAgendamento || []).map((tipo) => (
 												<Badge
 													key={tipo}
@@ -440,7 +447,7 @@ export default function AdvancedFiltersModal({ isOpen, onClose, filters, onFilte
 											/>
 										</div>
 									</div>
-									<div className="flex flex-wrap gap-2">
+									<div className="flex flex-wrap gap-2 overflow-x-auto scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-100 hover:scrollbar-thumb-gray-500">
 										<Button
 											type="button"
 											variant="outline"

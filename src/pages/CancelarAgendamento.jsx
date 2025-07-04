@@ -25,9 +25,12 @@ export default function CancelarAgendamento() {
                 setStatus('error');
                 if (error.response?.status === 404) {
                     setMessage('Agendamento não encontrado');
+                } else if (error.response?.data?.error && error.response?.data?.details) {
+                    setMessage(`${error.response.data.error}\n${error.response.data.details}`);
                 } else if (error.response?.data?.error) {
-                    const errorData = error.response.data;
-                    setMessage(errorData.details || errorData.error);
+                    setMessage(error.response.data.error);
+                } else if (error.response?.data?.details) {
+                    setMessage(error.response.data.details);
                 } else {
                     setMessage('Erro ao cancelar agendamento');
                 }
@@ -71,7 +74,20 @@ export default function CancelarAgendamento() {
                     <div className="text-center">
                         <div className="text-red-500 text-5xl mb-4">✕</div>
                         <h2 className="text-2xl font-bold text-gray-800 mb-2">Não foi possível cancelar</h2>
-                        <p className="text-gray-600 mb-6">{message}</p>
+                        <div className="text-gray-600 mb-6">
+                            {message && message.includes('\n') ? (
+                                <div className="space-y-2 text-left">
+                                    {message.split('\n').filter(line => line.trim()).map((erro, index) => (
+                                        <div key={index} className="flex items-start gap-2">
+                                            <span className="text-red-500 mt-1">•</span>
+                                            <span>{erro.trim()}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <p>{message}</p>
+                            )}
+                        </div>
                         <button
                             onClick={() => navigate('/')}
                             className="bg-emerald-500 text-white px-6 py-2 rounded hover:bg-emerald-600"

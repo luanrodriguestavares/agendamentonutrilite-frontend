@@ -15,6 +15,7 @@ const AgendamentoVisitanteForm = ({ dados, onChange, onError }) => {
         centroCusto: "",
         observacao: "",
         turno: "",
+        refeicoes: "Almoço",
         ...dados,
     })
 
@@ -167,7 +168,13 @@ const AgendamentoVisitanteForm = ({ dados, onChange, onError }) => {
                     <Coffee className="h-4 w-4 text-emerald-600" />
                     Refeições:
                 </Label>
-                <Input id="refeicoes" value={formData.refeicoes} disabled className="w-full bg-gray-100" placeholder="Almoço" />
+                <Input
+                    id="refeicoes"
+                    value={formData.refeicoes}
+                    disabled
+                    className="w-full bg-gray-100"
+                    placeholder="Almoço (fixo para visitantes)"
+                />
             </div>
 
             <div className="space-y-2">

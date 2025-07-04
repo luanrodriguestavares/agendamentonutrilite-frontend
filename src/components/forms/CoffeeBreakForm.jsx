@@ -20,6 +20,7 @@ const CoffeeBreakForm = ({ dados, onChange, onError }) => {
         horario: "",
         localEntrega: "",
         observacao: "",
+        refeicoes: "Coffee Break",
         ...dados,
     })
 

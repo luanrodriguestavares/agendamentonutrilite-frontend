@@ -343,7 +343,7 @@ export default function AgendamentoDetailModal({ agendamento, isOpen, onClose })
 
 	return (
 		<Dialog open={isOpen} onOpenChange={onClose}>
-			<DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+			<DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-100 hover:scrollbar-thumb-gray-500">
 				<DialogHeader className="space-y-4 p-6">
 					<div className="flex items-start justify-between">
 						<div className="flex items-center gap-3">
