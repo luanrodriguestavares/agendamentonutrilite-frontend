@@ -232,6 +232,73 @@ export default function AdvancedFiltersModal({ isOpen, onClose, filters, onFilte
 		return count
 	}
 
+	const hasActiveDateFilter = () => {
+		const dateFields = [
+			"periodoInicio", "periodoFim",
+			"dataInicio", "dataFim",
+			"dataCoffee", "dataLanche", "dataVisitante",
+			"dataInicioRotaExtra", "dataFimRotaExtra"
+		]
+		return dateFields.some(field => localFilters[field] && localFilters[field] !== "")
+	}
+
+	const getActiveDateFilterType = () => {
+		if (localFilters.periodoInicio || localFilters.periodoFim) return "periodo"
+		if (localFilters.dataInicio || localFilters.dataFim) return "timeHomeOffice"
+		if (localFilters.dataLanche) return "lanche"
+		if (localFilters.dataVisitante) return "visitante"
+		if (localFilters.dataCoffee) return "coffee"
+		if (localFilters.dataInicioRotaExtra || localFilters.dataFimRotaExtra) return "rotaExtra"
+		return null
+	}
+
+	const clearDateFilters = () => {
+		const clearedFilters = { ...localFilters }
+		const dateFields = [
+			"periodoInicio", "periodoFim",
+			"dataInicio", "dataFim",
+			"dataCoffee", "dataLanche", "dataVisitante",
+			"dataInicioRotaExtra", "dataFimRotaExtra"
+		]
+		dateFields.forEach(field => {
+			clearedFilters[field] = ""
+		})
+		setLocalFilters(clearedFilters)
+	}
+
+	const clearSpecificDateFilter = (filterType) => {
+		const clearedFilters = { ...localFilters }
+		switch (filterType) {
+			case "periodo":
+				clearedFilters.periodoInicio = ""
+				clearedFilters.periodoFim = ""
+				break
+			case "timeHomeOffice":
+				clearedFilters.dataInicio = ""
+				clearedFilters.dataFim = ""
+				break
+			case "lanche":
+				clearedFilters.dataLanche = ""
+				break
+			case "visitante":
+				clearedFilters.dataVisitante = ""
+				break
+			case "coffee":
+				clearedFilters.dataCoffee = ""
+				break
+			case "rotaExtra":
+				clearedFilters.dataInicioRotaExtra = ""
+				clearedFilters.dataFimRotaExtra = ""
+				break
+		}
+		setLocalFilters(clearedFilters)
+	}
+
+	const isDateFilterDisabled = (filterType) => {
+		const activeType = getActiveDateFilterType()
+		return activeType && activeType !== filterType
+	}
+
 	return (
 		<Dialog open={isOpen} onOpenChange={onClose}>
 			<DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-100 hover:scrollbar-thumb-gray-500">
@@ -421,7 +488,7 @@ export default function AdvancedFiltersModal({ isOpen, onClose, filters, onFilte
 								</CardTitle>
 							</CardHeader>
 							<CardContent className="space-y-4">
-								<div className="border border-gray-200 rounded-lg p-4 bg-gray-50">
+								<div className={`border border-gray-200 rounded-lg p-4 ${isDateFilterDisabled("periodo") ? "bg-gray-100 opacity-50" : "bg-gray-50"}`}>
 									<Label className="text-sm font-medium text-gray-900 mb-3 flex items-center gap-2">
 										<Calendar className="h-4 w-4" />
 										Filtro por Período Geral
@@ -436,6 +503,7 @@ export default function AdvancedFiltersModal({ isOpen, onClose, filters, onFilte
 												date={stringToDate(localFilters.periodoInicio)}
 												onChange={(date) => handleFilterChange("periodoInicio", dateToString(date))}
 												disablePast={false}
+												disabled={isDateFilterDisabled("periodo")}
 											/>
 										</div>
 										<div className="space-y-1">
@@ -444,6 +512,7 @@ export default function AdvancedFiltersModal({ isOpen, onClose, filters, onFilte
 												date={stringToDate(localFilters.periodoFim)}
 												onChange={(date) => handleFilterChange("periodoFim", dateToString(date))}
 												disablePast={false}
+												disabled={isDateFilterDisabled("periodo")}
 											/>
 										</div>
 									</div>
@@ -454,6 +523,7 @@ export default function AdvancedFiltersModal({ isOpen, onClose, filters, onFilte
 											size="sm"
 											onClick={() => applyQuickPeriodFilter("today")}
 											className="text-xs"
+											disabled={isDateFilterDisabled("periodo")}
 										>
 											Hoje
 										</Button>
@@ -463,6 +533,7 @@ export default function AdvancedFiltersModal({ isOpen, onClose, filters, onFilte
 											size="sm"
 											onClick={() => applyQuickPeriodFilter("week")}
 											className="text-xs"
+											disabled={isDateFilterDisabled("periodo")}
 										>
 											Esta Semana
 										</Button>
@@ -472,6 +543,7 @@ export default function AdvancedFiltersModal({ isOpen, onClose, filters, onFilte
 											size="sm"
 											onClick={() => applyQuickPeriodFilter("month")}
 											className="text-xs"
+											disabled={isDateFilterDisabled("periodo")}
 										>
 											Este Mês
 										</Button>
@@ -481,6 +553,7 @@ export default function AdvancedFiltersModal({ isOpen, onClose, filters, onFilte
 											size="sm"
 											onClick={() => applyQuickPeriodFilter("clear")}
 											className="text-xs text-gray-600 hover:text-gray-700"
+											disabled={isDateFilterDisabled("periodo")}
 										>
 											Limpar Período
 										</Button>
@@ -491,7 +564,7 @@ export default function AdvancedFiltersModal({ isOpen, onClose, filters, onFilte
 								</div>
 
 								<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-									<Card className="bg-white border border-gray-200">
+									<Card className={`bg-white border border-gray-200 ${isDateFilterDisabled("timeHomeOffice") ? "opacity-50" : ""}`}>
 										<CardHeader className="pb-2">
 											<CardTitle className="text-xs flex items-center gap-2">
 												<Calendar className="h-4 w-4" />
@@ -505,6 +578,7 @@ export default function AdvancedFiltersModal({ isOpen, onClose, filters, onFilte
 													date={stringToDate(localFilters.dataInicio)}
 													onChange={(date) => handleFilterChange("dataInicio", dateToString(date))}
 													disablePast={false}
+													disabled={isDateFilterDisabled("timeHomeOffice")}
 												/>
 											</div>
 											<div className="space-y-1">
@@ -513,12 +587,23 @@ export default function AdvancedFiltersModal({ isOpen, onClose, filters, onFilte
 													date={stringToDate(localFilters.dataFim)}
 													onChange={(date) => handleFilterChange("dataFim", dateToString(date))}
 													disablePast={false}
+													disabled={isDateFilterDisabled("timeHomeOffice")}
 												/>
 											</div>
+											{(localFilters.dataInicio || localFilters.dataFim) && (
+												<Button
+													variant="outline"
+													size="sm"
+													onClick={() => clearSpecificDateFilter("timeHomeOffice")}
+													className="text-xs text-red-600 hover:text-red-700 hover:bg-red-100 mt-2"
+												>
+													Limpar Filtro
+												</Button>
+											)}
 										</CardContent>
 									</Card>
 
-									<Card className="bg-white border border-gray-200">
+									<Card className={`bg-white border border-gray-200 ${isDateFilterDisabled("lanche") ? "opacity-50" : ""}`}>
 										<CardHeader className="pb-2">
 											<CardTitle className="text-xs flex items-center gap-2">
 												<Calendar className="h-4 w-4" />
@@ -532,12 +617,23 @@ export default function AdvancedFiltersModal({ isOpen, onClose, filters, onFilte
 													date={stringToDate(localFilters.dataLanche)}
 													onChange={(date) => handleFilterChange("dataLanche", dateToString(date))}
 													disablePast={false}
+													disabled={isDateFilterDisabled("lanche")}
 												/>
 											</div>
+											{localFilters.dataLanche && (
+												<Button
+													variant="outline"
+													size="sm"
+													onClick={() => clearSpecificDateFilter("lanche")}
+													className="text-xs text-red-600 hover:text-red-700 hover:bg-red-100 mt-2"
+												>
+													Limpar Filtro
+												</Button>
+											)}
 										</CardContent>
 									</Card>
 
-									<Card className="bg-white border border-gray-200">
+									<Card className={`bg-white border border-gray-200 ${isDateFilterDisabled("visitante") ? "opacity-50" : ""}`}>
 										<CardHeader className="pb-2">
 											<CardTitle className="text-xs flex items-center gap-2">
 												<Calendar className="h-4 w-4" />
@@ -551,12 +647,23 @@ export default function AdvancedFiltersModal({ isOpen, onClose, filters, onFilte
 													date={stringToDate(localFilters.dataVisitante)}
 													onChange={(date) => handleFilterChange("dataVisitante", dateToString(date))}
 													disablePast={false}
+													disabled={isDateFilterDisabled("visitante")}
 												/>
 											</div>
+											{localFilters.dataVisitante && (
+												<Button
+													variant="outline"
+													size="sm"
+													onClick={() => clearSpecificDateFilter("visitante")}
+													className="text-xs text-red-600 hover:text-red-700 hover:bg-red-100 mt-2"
+												>
+													Limpar Filtro
+												</Button>
+											)}
 										</CardContent>
 									</Card>
 
-									<Card className="bg-white border border-gray-200">
+									<Card className={`bg-white border border-gray-200 ${isDateFilterDisabled("coffee") ? "opacity-50" : ""}`}>
 										<CardHeader className="pb-2">
 											<CardTitle className="text-xs flex items-center gap-2">
 												<Calendar className="h-4 w-4" />
@@ -570,12 +677,23 @@ export default function AdvancedFiltersModal({ isOpen, onClose, filters, onFilte
 													date={stringToDate(localFilters.dataCoffee)}
 													onChange={(date) => handleFilterChange("dataCoffee", dateToString(date))}
 													disablePast={false}
+													disabled={isDateFilterDisabled("coffee")}
 												/>
 											</div>
+											{localFilters.dataCoffee && (
+												<Button
+													variant="outline"
+													size="sm"
+													onClick={() => clearSpecificDateFilter("coffee")}
+													className="text-xs text-red-600 hover:text-red-700 hover:bg-red-100 mt-2"
+												>
+													Limpar Filtro
+												</Button>
+											)}
 										</CardContent>
 									</Card>
 
-									<Card className="bg-white border border-gray-200">
+									<Card className={`bg-white border border-gray-200 ${isDateFilterDisabled("rotaExtra") ? "opacity-50" : ""}`}>
 										<CardHeader className="pb-2">
 											<CardTitle className="text-xs flex items-center gap-2">
 												<Calendar className="h-4 w-4" />
@@ -589,6 +707,7 @@ export default function AdvancedFiltersModal({ isOpen, onClose, filters, onFilte
 													date={stringToDate(localFilters.dataInicioRotaExtra)}
 													onChange={(date) => handleFilterChange("dataInicioRotaExtra", dateToString(date))}
 													disablePast={false}
+													disabled={isDateFilterDisabled("rotaExtra")}
 												/>
 											</div>
 											<div className="space-y-1">
@@ -597,8 +716,19 @@ export default function AdvancedFiltersModal({ isOpen, onClose, filters, onFilte
 													date={stringToDate(localFilters.dataFimRotaExtra)}
 													onChange={(date) => handleFilterChange("dataFimRotaExtra", dateToString(date))}
 													disablePast={false}
+													disabled={isDateFilterDisabled("rotaExtra")}
 												/>
 											</div>
+											{(localFilters.dataInicioRotaExtra || localFilters.dataFimRotaExtra) && (
+												<Button
+													variant="outline"
+													size="sm"
+													onClick={() => clearSpecificDateFilter("rotaExtra")}
+													className="text-xs text-red-600 hover:text-red-700 hover:bg-red-100"
+												>
+													Limpar Filtro
+												</Button>
+											)}
 										</CardContent>
 									</Card>
 								</div>

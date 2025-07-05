@@ -21,7 +21,7 @@ import * as XLSX from "xlsx"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge as UIBadge } from "@/components/ui/badge"
 
-const ITEMS_PER_PAGE = 20
+const ITEMS_PER_PAGE = 10
 
 const normalizeDate = (dateInput) => {
 	if (!dateInput) return null
@@ -380,55 +380,23 @@ export default function Admin() {
 		}
 
 		if (filters.periodoInicio || filters.periodoFim) {
-			console.log("=== FILTRO DE PERÍODO ===")
-			console.log("Filtros aplicados:", { inicio: filters.periodoInicio, fim: filters.periodoFim })
 
 			filtered = filtered.filter((agendamento) => {
-				const agendamentoDate = getMainAgendamentoDate(agendamento)
+				const agendamentoStart = getMainAgendamentoDate(agendamento)
+				let agendamentoEnd = null
 
-				if (!agendamentoDate) {
-					console.log("❌ Agendamento sem data válida:", agendamento.id)
-					return false
+				if (agendamento.dataFim) {
+					agendamentoEnd = normalizeDate(agendamento.dataFim)
+				} else {
+					agendamentoEnd = agendamentoStart
 				}
 
-				let isInRange = true
-				const agendamentoDateStr = agendamentoDate.toISOString().split("T")[0]
+				const filterStart = filters.periodoInicio ? normalizeDate(filters.periodoInicio) : null
+				const filterEnd = filters.periodoFim ? normalizeDate(filters.periodoFim) : null
 
-				if (filters.periodoInicio) {
-					const startDate = normalizeDate(filters.periodoInicio)
-					if (startDate && !isSameOrAfterDay(agendamentoDate, startDate)) {
-						console.log("❌ Agendamento antes do início:", {
-							id: agendamento.id,
-							tipo: agendamento.tipoAgendamento,
-							agendamentoDate: agendamentoDateStr,
-							startDate: startDate.toISOString().split("T")[0]
-						})
-						isInRange = false
-					}
-				}
-
-				if (filters.periodoFim) {
-					const endDate = normalizeDate(filters.periodoFim)
-					if (endDate && !isSameOrBeforeDay(agendamentoDate, endDate)) {
-						console.log("❌ Agendamento depois do fim:", {
-							id: agendamento.id,
-							tipo: agendamento.tipoAgendamento,
-							agendamentoDate: agendamentoDateStr,
-							endDate: endDate.toISOString().split("T")[0]
-						})
-						isInRange = false
-					}
-				}
-
-				if (isInRange) {
-					console.log("✅ Agendamento incluído no período:", {
-						id: agendamento.id,
-						tipo: agendamento.tipoAgendamento,
-						data: agendamentoDateStr,
-					})
-				}
-
-				return isInRange
+				if (filterStart && agendamentoStart < filterStart) return false
+				if (filterEnd && agendamentoEnd > filterEnd) return false
+				return true
 			})
 
 			console.log("=== FIM FILTRO DE PERÍODO ===")
@@ -577,6 +545,12 @@ export default function Admin() {
 				if (aValue < bValue) return sortConfig.direction === "asc" ? -1 : 1
 				if (aValue > bValue) return sortConfig.direction === "asc" ? 1 : -1
 				return 0
+			})
+		} else {
+			filtered.sort((a, b) => {
+				const aDate = new Date(a.createdAt || 0)
+				const bDate = new Date(b.createdAt || 0)
+				return bDate - aDate
 			})
 		}
 

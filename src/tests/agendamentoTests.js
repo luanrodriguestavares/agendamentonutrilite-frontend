@@ -85,7 +85,6 @@ class AgendamentoTestSuite {
         this.testSolicitacaoLanche()
         this.testCoffeeBreak()
         this.testRotaExtra()
-        // Removido: this.testCancelamentos()
 
         this.printResults()
     }
