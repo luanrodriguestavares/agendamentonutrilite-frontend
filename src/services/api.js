@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-    baseURL: 'http://localhost:3001',
+    baseURL: import.meta.env.VITE_API_URL || 'http://localhost:3001',
 });
 
 api.interceptors.request.use((config) => {
@@ -34,14 +34,14 @@ export const getAgendamento = async (id) => {
 
 export const updateAgendamento = async (id, data) => {
     const response = await api.put(`/agendamentos/${id}`, data, {
-        timeout: 30000 // 30 segundos de timeout
+        timeout: 30000
     });
     return response;
 };
 
 export const cancelAgendamento = async (id, data) => {
     const response = await api.put(`/agendamentos/${id}/cancel`, data, {
-        timeout: 30000 // 30 segundos de timeout
+        timeout: 30000
     });
     return response.data;
 };
