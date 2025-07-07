@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { DatePicker } from "@/components/ui/date-picker"
 import { Calendar, Building, Users, User, FileText, Clock, Coffee } from "lucide-react"
+import { verificarRegrasFimDeSemana } from "../../utils/validacoes-agendamento"
 
 const AgendamentoVisitanteForm = ({ dados, onChange, onError }) => {
     const [formData, setFormData] = useState({
@@ -38,6 +39,12 @@ const AgendamentoVisitanteForm = ({ dados, onChange, onError }) => {
     const validarHorarioAgendamento = (date) => {
         if (!formData.turno) {
             onError("Turno não selecionado", "Por favor, selecione o turno antes de escolher a data.")
+            return false
+        }
+
+        const verificarFimDeSemana = verificarRegrasFimDeSemana(date)
+        if (!verificarFimDeSemana.permitido) {
+            onError("Agendamento não permitido", verificarFimDeSemana.mensagem)
             return false
         }
 

@@ -5,7 +5,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Checkbox } from "@/components/ui/checkbox"
 import { DatePicker } from "@/components/ui/date-picker"
 import { Calendar, Clock, Building, Utensils, FileText, Users } from "lucide-react"
-import { TIMES_SETORES } from "../../utils/validacoes-agendamento"
+import { TIMES_SETORES, verificarRegrasFimDeSemana } from "../../utils/validacoes-agendamento"
 
 const HomeOfficeForm = ({ dados, onChange, onError }) => {
     const [formData, setFormData] = useState({
@@ -39,6 +39,12 @@ const HomeOfficeForm = ({ dados, onChange, onError }) => {
     const validarHorarioAgendamento = (date) => {
         if (!formData.turno) {
             onError("Turno não selecionado", "Por favor, selecione o turno antes de escolher a data.")
+            return false
+        }
+
+        const verificarFimDeSemana = verificarRegrasFimDeSemana(date)
+        if (!verificarFimDeSemana.permitido) {
+            onError("Agendamento não permitido", verificarFimDeSemana.mensagem)
             return false
         }
 

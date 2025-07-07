@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { DatePicker } from "@/components/ui/date-picker"
 import { Calendar, Users, DollarSign, MapPin, FileText } from "lucide-react"
-import { TIMES_SETORES, CENTROS_CUSTO, validarRotaExtra } from "../../utils/validacoes-agendamento"
+import { TIMES_SETORES, CENTROS_CUSTO, validarRotaExtra, verificarRegrasFimDeSemana } from "../../utils/validacoes-agendamento"
 
 const RotaExtraForm = ({ dados, onChange, onError }) => {
     const [formData, setFormData] = useState({
@@ -30,6 +30,12 @@ const RotaExtraForm = ({ dados, onChange, onError }) => {
 
     const handleDataChange = (field, date) => {
         if (!date) return
+
+        const verificarFimDeSemana = verificarRegrasFimDeSemana(date)
+        if (!verificarFimDeSemana.permitido) {
+            onError("Agendamento não permitido", verificarFimDeSemana.mensagem)
+            return
+        }
 
         const hoje = new Date()
         hoje.setHours(0, 0, 0, 0)

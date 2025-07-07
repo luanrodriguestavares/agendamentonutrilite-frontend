@@ -53,6 +53,57 @@ export const TIMES_SETORES = [
 ]
 
 /**
+ * Função utilitária para verificar regras de fim de semana
+ * Retorna { permitido: boolean, mensagem: string }
+ */
+export function verificarRegrasFimDeSemana(dataAgendamento) {
+    const hoje = new Date()
+    hoje.setHours(0, 0, 0, 0)
+    const diaSemanaHoje = hoje.getDay()
+
+    const dataAgendamentoObj = new Date(dataAgendamento)
+    dataAgendamentoObj.setHours(0, 0, 0, 0)
+
+    if (diaSemanaHoje === 6) {
+        if (dataAgendamentoObj.getTime() === hoje.getTime()) {
+            return {
+                permitido: false,
+                mensagem: "Não é possível realizar agendamentos para sábados."
+            }
+        }
+
+        const amanha = new Date(hoje)
+        amanha.setDate(amanha.getDate() + 1)
+        if (dataAgendamentoObj.getTime() === amanha.getTime()) {
+            return {
+                permitido: false,
+                mensagem: "Não é possível realizar agendamentos para domingos."
+            }
+        }
+    }
+
+    if (diaSemanaHoje === 0) {
+        if (dataAgendamentoObj.getTime() === hoje.getTime()) {
+            return {
+                permitido: false,
+                mensagem: "Não é possível realizar agendamentos para domingos."
+            }
+        }
+
+        const amanha = new Date(hoje)
+        amanha.setDate(amanha.getDate() + 1)
+        if (dataAgendamentoObj.getTime() === amanha.getTime()) {
+            return {
+                permitido: true,
+                mensagem: ""
+            }
+        }
+    }
+
+    return { permitido: true, mensagem: "" }
+}
+
+/**
  * Validação para Agendamento Time
  */
 export function validarAgendamentoTime(data) {
@@ -61,6 +112,11 @@ export function validarAgendamentoTime(data) {
     if (data.isFeriado) {
         if (!data.dataFeriado) {
             return { permitido: true, mensagem: "" }
+        }
+
+        const verificarFimDeSemana = verificarRegrasFimDeSemana(data.dataFeriado)
+        if (!verificarFimDeSemana.permitido) {
+            return verificarFimDeSemana
         }
 
         const dataFeriado = new Date(data.dataFeriado)
@@ -89,6 +145,11 @@ export function validarAgendamentoTime(data) {
 
     if (!data.dataInicio) {
         return { permitido: true, mensagem: "" }
+    }
+
+    const verificarFimDeSemanaInicio = verificarRegrasFimDeSemana(data.dataInicio)
+    if (!verificarFimDeSemanaInicio.permitido) {
+        return verificarFimDeSemanaInicio
     }
 
     const dataInicio = new Date(data.dataInicio)
@@ -127,6 +188,11 @@ export function validarAgendamentoTime(data) {
     }
 
     if (data.dataFim) {
+        const verificarFimDeSemanaFim = verificarRegrasFimDeSemana(data.dataFim)
+        if (!verificarFimDeSemanaFim.permitido) {
+            return verificarFimDeSemanaFim
+        }
+
         const dataFim = new Date(data.dataFim)
         const diaSemanaFim = dataFim.getDay()
 
@@ -202,6 +268,11 @@ export function validarHomeOffice(data) {
 
     if (!data.dataInicio) {
         return { permitido: true, mensagem: "" }
+    }
+
+    const verificarFimDeSemanaInicio = verificarRegrasFimDeSemana(data.dataInicio)
+    if (!verificarFimDeSemanaInicio.permitido) {
+        return verificarFimDeSemanaInicio
     }
 
     const dataInicio = new Date(data.dataInicio)
@@ -282,6 +353,12 @@ export function validarHomeOffice(data) {
     }
 
     if (data.dataFim) {
+        // Verificar regras de fim de semana para data de fim
+        const verificarFimDeSemanaFim = verificarRegrasFimDeSemana(data.dataFim)
+        if (!verificarFimDeSemanaFim.permitido) {
+            return verificarFimDeSemanaFim
+        }
+
         const dataFim = new Date(data.dataFim)
         const diaSemanaFim = dataFim.getDay()
 
@@ -341,6 +418,11 @@ export function validarSolicitacaoLanche(data) {
     const agora = new Date()
     const dataLanche = new Date(data.data)
 
+    const verificarFimDeSemana = verificarRegrasFimDeSemana(data.data)
+    if (!verificarFimDeSemana.permitido) {
+        return verificarFimDeSemana
+    }
+
     if (dataLanche.toDateString() === agora.toDateString()) {
         const limite = new Date(agora)
         limite.setHours(9, 0, 0, 0)
@@ -357,6 +439,32 @@ export function validarSolicitacaoLanche(data) {
 
     if (dataLanche.toDateString() === amanha.toDateString()) {
         return { permitido: true, mensagem: "" }
+    }
+
+    return { permitido: true, mensagem: "" }
+}
+
+/**
+ * Validação para Agendamento Visitante
+ */
+export function validarAgendamentoVisitante(data) {
+    const agora = new Date()
+    const dataVisitante = new Date(data.data)
+
+    const verificarFimDeSemana = verificarRegrasFimDeSemana(data.data)
+    if (!verificarFimDeSemana.permitido) {
+        return verificarFimDeSemana
+    }
+
+    if (dataVisitante.toDateString() === agora.toDateString()) {
+        const limite = new Date(agora)
+        limite.setHours(7, 30, 0, 0)
+        if (agora > limite) {
+            return {
+                permitido: false,
+                mensagem: "Agendamento de visitante para o mesmo dia: deve ser feito até às 07:30h da manhã.",
+            }
+        }
     }
 
     return { permitido: true, mensagem: "" }
@@ -390,6 +498,20 @@ export function validarRotaExtra(data) {
     const agora = new Date()
     const diaSemana = agora.getDay()
 
+    if (data.dataInicio) {
+        const verificarFimDeSemanaInicio = verificarRegrasFimDeSemana(data.dataInicio)
+        if (!verificarFimDeSemanaInicio.permitido) {
+            return verificarFimDeSemanaInicio
+        }
+    }
+
+    if (data.dataFim) {
+        const verificarFimDeSemanaFim = verificarRegrasFimDeSemana(data.dataFim)
+        if (!verificarFimDeSemanaFim.permitido) {
+            return verificarFimDeSemanaFim
+        }
+    }
+
     if (diaSemana === 5) {
         const limite = new Date(agora)
         limite.setHours(11, 0, 0, 0)
@@ -398,11 +520,6 @@ export function validarRotaExtra(data) {
                 permitido: false,
                 mensagem: "Rota Extra: Agendar até sexta-feira às 11:00h.",
             }
-        }
-    } else if (diaSemana > 5) {
-        return {
-            permitido: false,
-            mensagem: "Rota Extra: Agendar até sexta-feira às 11:00h.",
         }
     }
 
