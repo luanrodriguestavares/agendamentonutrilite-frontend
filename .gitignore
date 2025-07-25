@@ -19,26 +19,12 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-# env files
-.env*
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
-
 # vercel
 .vercel
 
 # typescript
 *.tsbuildinfo
 next-env.d.ts
-
-# Ambiente de desenvolvimento
-.env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
 
 # Build
 dist
