@@ -67,9 +67,10 @@ const getAgendamentoQuantidadeTotal = (agendamento) => {
 			return Number(agendamento.quantidadeVisitantes) || 0
 		case "Agendamento para Time":
 			return (
-				(Number(agendamento.quantidadeAlmocoLanche) || 0) +
-				(Number(agendamento.quantidadeJantarCeia) || 0) +
-				(Number(agendamento.quantidadeLancheExtra) || 0)
+				(Number(agendamento.quantidadeAlmoco) || 0) +
+				(Number(agendamento.quantidadeLanche) || 0) +
+				(Number(agendamento.quantidadeJantar) || 0) +
+				(Number(agendamento.quantidadeCeia) || 0)
 			)
 		case "Home Office":
 			if (Array.isArray(agendamento.refeicoes)) return agendamento.refeicoes.length
@@ -756,9 +757,10 @@ export default function Admin() {
 					"data",
 					"dataFeriado",
 
-					"quantidadeAlmocoLanche",
-					"quantidadeJantarCeia",
-					"quantidadeLancheExtra",
+					"quantidadeAlmoco",
+					"quantidadeLanche",
+					"quantidadeJantar",
+					"quantidadeCeia",
 					"quantidadeVisitantes",
 					"quantidadeTiangua",
 					"quantidadeUbajara",
@@ -773,6 +775,7 @@ export default function Admin() {
 					"refeicoes",
 					"isFeriado",
 					"dia",
+					"diasSemana",
 
 					"createdAt",
 
@@ -803,9 +806,10 @@ export default function Admin() {
 			dataFeriado: "Data Feriado",
 			horario: "Horário",
 			cardapio: "Cardápio",
-			quantidadeAlmocoLanche: "Qtd Almoço/Lanche",
-			quantidadeJantarCeia: "Qtd Jantar/Ceia",
-			quantidadeLancheExtra: "Qtd Lanche Extra",
+			quantidadeAlmoco: "Qtd Almoço",
+			quantidadeLanche: "Qtd Lanche",
+			quantidadeJantar: "Qtd Jantar",
+			quantidadeCeia: "Qtd Ceia",
 			quantidadeVisitantes: "Qtd Visitantes",
 			quantidadeTiangua: "Qtd Tianguá",
 			quantidadeUbajara: "Qtd Ubajara",
@@ -817,6 +821,7 @@ export default function Admin() {
 			refeicoes: "Refeições",
 			isFeriado: "É Feriado",
 			dia: "Categoria Dia",
+			diasSemana: "Dias da Semana",
 			observacao: "Observação",
 			createdAt: "Data Criação",
 		}
@@ -855,12 +860,15 @@ export default function Admin() {
 					return agendamento.horario || ""
 				case "cardapio":
 					return agendamento.cardapio || ""
-				case "quantidadeAlmocoLanche":
-					return agendamento.quantidadeAlmocoLanche || ""
-				case "quantidadeJantarCeia":
-					return agendamento.quantidadeJantarCeia || ""
-				case "quantidadeLancheExtra":
-					return agendamento.quantidadeLancheExtra || ""
+				case "quantidadeAlmoco":
+					return agendamento.quantidadeAlmoco || ""
+				case "quantidadeLanche":
+					return agendamento.quantidadeLanche || ""
+				case "quantidadeJantar":
+					return agendamento.quantidadeJantar || ""
+				case "quantidadeCeia":
+					return agendamento.quantidadeCeia || ""
+
 				case "quantidadeVisitantes":
 					return agendamento.quantidadeVisitantes || ""
 				case "quantidadeTiangua":
@@ -883,6 +891,8 @@ export default function Admin() {
 					return agendamento.isFeriado ? "Sim" : "Não"
 				case "dia":
 					return agendamento.dia || ""
+				case "diasSemana":
+					return formatDiasSemana(agendamento.diasSemana)
 				case "observacao":
 					return agendamento.observacao || ""
 				case "createdAt":
@@ -982,6 +992,46 @@ export default function Admin() {
 		return refeicoes
 	}
 
+	    const formatDiasSemana = (diasSemana) => {
+        if (!diasSemana) return "-"
+        
+		const diasMap = {
+            "segunda": "Segunda",
+            "terca": "Terça", 
+            "quarta": "Quarta",
+            "quinta": "Quinta",
+            "sexta": "Sexta",
+            "sabado": "Sábado",
+            "domingo": "Domingo"
+        }
+        
+        let diasArray = []
+        
+        if (Array.isArray(diasSemana)) {
+            diasArray = diasSemana
+        } else if (typeof diasSemana === "string" && diasSemana.startsWith("[")) {
+            try {
+                const parsed = JSON.parse(diasSemana)
+                diasArray = Array.isArray(parsed) ? parsed : []
+            } catch {
+                return "-"
+            }
+        } else if (typeof diasSemana === "string") {
+            diasArray = [diasSemana]
+        } else {
+            return "-"
+        }
+        
+        if (diasArray.length === 0) return "-"
+        
+        const diasFormatados = diasArray.map(dia => {
+            const diaTrim = dia.trim()
+            return diasMap[diaTrim] || diaTrim
+        })
+        
+        return diasFormatados.join(", ")
+    }
+
 	const totalPages = Math.ceil(filteredAgendamentos.length / ITEMS_PER_PAGE)
 	const startIndex = (currentPage - 1) * ITEMS_PER_PAGE
 	const endIndex = startIndex + ITEMS_PER_PAGE
@@ -1049,9 +1099,11 @@ export default function Admin() {
 			"dataFeriado",
 			"turno",
 			"refeitorio",
-			"quantidadeAlmocoLanche",
-			"quantidadeJantarCeia",
-			"quantidadeLancheExtra",
+			"quantidadeAlmoco",
+			"quantidadeLanche",
+			"quantidadeJantar",
+			"quantidadeCeia",
+			"diasSemana",
 			"observacao",
 			"createdAt",
 			"actions",
@@ -1083,6 +1135,7 @@ export default function Admin() {
 			"turno",
 			"refeitorio",
 			"refeicoes",
+			"diasSemana",
 			"observacao",
 			"createdAt",
 			"actions",
@@ -1100,6 +1153,7 @@ export default function Admin() {
 			"dataFim",
 			"quantidadeTiangua",
 			"quantidadeUbajara",
+			"diasSemana",
 			"observacao",
 			"createdAt",
 			"actions",
@@ -1141,9 +1195,10 @@ export default function Admin() {
 					"data",
 					"dataFeriado",
 
-					"quantidadeAlmocoLanche",
-					"quantidadeJantarCeia",
-					"quantidadeLancheExtra",
+					"quantidadeAlmoco",
+					"quantidadeLanche",
+					"quantidadeJantar",
+					"quantidadeCeia",
 					"quantidadeVisitantes",
 					"quantidadeTiangua",
 					"quantidadeUbajara",
@@ -1158,6 +1213,7 @@ export default function Admin() {
 					"refeicoes",
 					"isFeriado",
 					"dia",
+					"diasSemana",
 
 					"createdAt",
 
@@ -1276,21 +1332,27 @@ export default function Admin() {
 		},
 		horario: { label: "Horário", minWidth: "80px", cell: (ag) => <TableCell>{ag.horario || "-"}</TableCell> },
 		cardapio: { label: "Cardápio", minWidth: "120px", cell: (ag) => <TableCell>{ag.cardapio || "-"}</TableCell> },
-		quantidadeAlmocoLanche: {
-			label: "Qtd Almoço/Lanche",
-			minWidth: "180px",
-			cell: (ag) => <TableCell>{ag.quantidadeAlmocoLanche || "-"}</TableCell>,
+		quantidadeAlmoco: {
+			label: "Qtd Almoço",
+			minWidth: "120px",
+			cell: (ag) => <TableCell>{ag.quantidadeAlmoco || "-"}</TableCell>,
 		},
-		quantidadeJantarCeia: {
-			label: "Qtd Jantar/Ceia",
-			minWidth: "180px",
-			cell: (ag) => <TableCell>{ag.quantidadeJantarCeia || "-"}</TableCell>,
+		quantidadeLanche: {
+			label: "Qtd Lanche",
+			minWidth: "120px",
+			cell: (ag) => <TableCell>{ag.quantidadeLanche || "-"}</TableCell>,
 		},
-		quantidadeLancheExtra: {
-			label: "Qtd Lanche Extra",
-			minWidth: "180px",
-			cell: (ag) => <TableCell>{ag.quantidadeLancheExtra || "-"}</TableCell>,
+		quantidadeJantar: {
+			label: "Qtd Jantar",
+			minWidth: "120px",
+			cell: (ag) => <TableCell>{ag.quantidadeJantar || "-"}</TableCell>,
 		},
+		quantidadeCeia: {
+			label: "Qtd Ceia",
+			minWidth: "120px",
+			cell: (ag) => <TableCell>{ag.quantidadeCeia || "-"}</TableCell>,
+		},
+
 		quantidadeVisitantes: {
 			label: "Qtd Visitantes",
 			minWidth: "150px",
@@ -1342,6 +1404,15 @@ export default function Admin() {
 			cell: (ag) => <TableCell>{ag.isFeriado ? "Sim" : "Não"}</TableCell>,
 		},
 		dia: { label: "Categoria Dia", minWidth: "100px", cell: (ag) => <TableCell>{ag.dia || "-"}</TableCell> },
+		diasSemana: {
+			label: "Dias da Semana",
+			minWidth: "150px",
+			cell: (ag) => (
+				<TableCell className="max-w-[150px] truncate" title={formatDiasSemana(ag.diasSemana)}>
+					{formatDiasSemana(ag.diasSemana)}
+				</TableCell>
+			),
+		},
 		observacao: {
 			label: "Observação",
 			minWidth: "200px",

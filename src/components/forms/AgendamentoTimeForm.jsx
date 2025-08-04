@@ -377,7 +377,7 @@ const AgendamentoTimeForm = ({ dados, onChange, onError }) => {
                             min="0"
                             className="w-full"
                             placeholder="Número de pessoas"
-                            required
+                           
                         />
                     </div>
                     
@@ -414,7 +414,7 @@ const AgendamentoTimeForm = ({ dados, onChange, onError }) => {
                             min="0"
                             className="w-full"
                             placeholder="Número de pessoas"
-                            required
+                            
                         />
                     </div>
                     

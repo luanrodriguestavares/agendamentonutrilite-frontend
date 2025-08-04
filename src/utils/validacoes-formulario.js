@@ -100,15 +100,23 @@ export const validarAgendamentoTime = (formData) => {
         }
     }
 
-    if (formData.turno === "A") {
-        if (!formData.quantidadeAlmoco || formData.quantidadeAlmoco <= 0) {
-            erros.push("Quantidade de Almoço é obrigatória para o turno A")
+    
+    if (formData.turno === "A" || formData.turno === "B") {
+        const temAlgumaRefeicao = (
+            (formData.quantidadeAlmoco && formData.quantidadeAlmoco > 0) ||
+            (formData.quantidadeLanche && formData.quantidadeLanche > 0) ||
+            (formData.quantidadeJantar && formData.quantidadeJantar > 0) ||
+            (formData.quantidadeCeia && formData.quantidadeCeia > 0)
+        )
+        
+        if (!temAlgumaRefeicao) {
+            erros.push("Para o turno " + formData.turno + ", pelo menos uma refeição deve ser preenchida")
         }
-    } else if (formData.turno === "B") {
-        if (!formData.quantidadeJantar || formData.quantidadeJantar <= 0) {
-            erros.push("Quantidade de Jantar é obrigatória para o turno B")
-        }
-    } else if (formData.turno === "ADM") {
+    }
+
+   
+   
+    if (formData.turno === "ADM") {
         if (!formData.quantidadeAlmoco || formData.quantidadeAlmoco <= 0) {
             erros.push("Quantidade de Almoço é obrigatória para o turno ADM")
         }

@@ -115,6 +115,46 @@ export default function AgendamentoDetailModal({ agendamento, isOpen, onClose })
 		return null
 	}
 
+	    const formatDiasSemana = (diasSemana) => {
+        if (!diasSemana) return null
+        
+        const diasMap = {
+            "segunda": "Segunda",
+            "terca": "Terça", 
+            "quarta": "Quarta",
+            "quinta": "Quinta",
+            "sexta": "Sexta",
+            "sabado": "Sábado",
+            "domingo": "Domingo"
+        }
+        
+        let diasArray = []
+        
+        if (Array.isArray(diasSemana)) {
+            diasArray = diasSemana
+        } else if (typeof diasSemana === "string" && diasSemana.startsWith("[")) {
+            try {
+                const parsed = JSON.parse(diasSemana)
+                diasArray = Array.isArray(parsed) ? parsed : []
+            } catch {
+                return null
+            }
+        } else if (typeof diasSemana === "string") {
+            diasArray = [diasSemana]
+        } else {
+            return null
+        }
+        
+        if (diasArray.length === 0) return null
+        
+        const diasFormatados = diasArray.map(dia => {
+            const diaTrim = dia.trim()
+            return diasMap[diaTrim] || diaTrim
+        })
+        
+        return diasFormatados.join(", ")
+    }
+
 	const getAgendamentoDisplayDate = (agendamento) => {
 		try {
 			switch (agendamento.tipoAgendamento) {
@@ -490,43 +530,66 @@ export default function AgendamentoDetailModal({ agendamento, isOpen, onClose })
 												</div>
 											</div>
 										)}
+										{formatDiasSemana(agendamento.diasSemana) && (
+											<div className="flex items-center gap-3">
+												<Calendar className="h-4 w-4 text-emerald-600" />
+												<div>
+													<span className="text-xs text-emerald-600 uppercase tracking-wide">Dias da Semana</span>
+													<p className="font-medium">{formatDiasSemana(agendamento.diasSemana)}</p>
+												</div>
+											</div>
+										)}
 									</div>
 								</div>
 
-								{(agendamento.quantidadeAlmocoLanche ||
-									agendamento.quantidadeJantarCeia ||
-									agendamento.quantidadeLancheExtra) && (
+								{(agendamento.quantidadeAlmoco ||
+									agendamento.quantidadeLanche ||
+									agendamento.quantidadeJantar ||
+									agendamento.quantidadeCeia) && (
 										<div className="bg-white border border-emerald-200 p-4 rounded-lg">
 											<h4 className="text-sm font-medium text-emerald-800 mb-3">Quantidade de Refeições</h4>
-											<div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-												{agendamento.quantidadeAlmocoLanche > 0 && (
+											<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+												{agendamento.quantidadeAlmoco > 0 && (
 													<div className="flex items-center justify-between p-3 bg-emerald-50 rounded-lg">
 														<div className="flex items-center gap-2">
 															<Utensils className="h-4 w-4 text-emerald-600" />
-															<span className="text-sm font-medium">Almoço/Lanche</span>
+															<span className="text-sm font-medium">Almoço</span>
 														</div>
 														<span className="text-lg font-bold text-emerald-700">
-															{agendamento.quantidadeAlmocoLanche}
+															{agendamento.quantidadeAlmoco}
 														</span>
 													</div>
 												)}
-												{agendamento.quantidadeJantarCeia > 0 && (
+												{agendamento.quantidadeLanche > 0 && (
 													<div className="flex items-center justify-between p-3 bg-emerald-50 rounded-lg">
 														<div className="flex items-center gap-2">
 															<Utensils className="h-4 w-4 text-emerald-600" />
-															<span className="text-sm font-medium">Jantar/Ceia</span>
-														</div>
-														<span className="text-lg font-bold text-emerald-700">{agendamento.quantidadeJantarCeia}</span>
-													</div>
-												)}
-												{agendamento.quantidadeLancheExtra > 0 && (
-													<div className="flex items-center justify-between p-3 bg-emerald-50 rounded-lg">
-														<div className="flex items-center gap-2">
-															<Utensils className="h-4 w-4 text-emerald-600" />
-															<span className="text-sm font-medium">Lanche Extra</span>
+															<span className="text-sm font-medium">Lanche</span>
 														</div>
 														<span className="text-lg font-bold text-emerald-700">
-															{agendamento.quantidadeLancheExtra}
+															{agendamento.quantidadeLanche}
+														</span>
+													</div>
+												)}
+												{agendamento.quantidadeJantar > 0 && (
+													<div className="flex items-center justify-between p-3 bg-emerald-50 rounded-lg">
+														<div className="flex items-center gap-2">
+															<Utensils className="h-4 w-4 text-emerald-600" />
+															<span className="text-sm font-medium">Jantar</span>
+														</div>
+														<span className="text-lg font-bold text-emerald-700">
+															{agendamento.quantidadeJantar}
+														</span>
+													</div>
+												)}
+												{agendamento.quantidadeCeia > 0 && (
+													<div className="flex items-center justify-between p-3 bg-emerald-50 rounded-lg">
+														<div className="flex items-center gap-2">
+															<Utensils className="h-4 w-4 text-emerald-600" />
+															<span className="text-sm font-medium">Ceia</span>
+														</div>
+														<span className="text-lg font-bold text-emerald-700">
+															{agendamento.quantidadeCeia}
 														</span>
 													</div>
 												)}
@@ -585,6 +648,15 @@ export default function AgendamentoDetailModal({ agendamento, isOpen, onClose })
 												<div>
 													<span className="text-xs text-blue-600 uppercase tracking-wide">Turno</span>
 													<p className="font-medium">{agendamento.turno}</p>
+												</div>
+											</div>
+										)}
+										{formatDiasSemana(agendamento.diasSemana) && (
+											<div className="flex items-center gap-3">
+												<Calendar className="h-4 w-4 text-blue-600" />
+												<div>
+													<span className="text-xs text-blue-600 uppercase tracking-wide">Dias da Semana</span>
+													<p className="font-medium">{formatDiasSemana(agendamento.diasSemana)}</p>
 												</div>
 											</div>
 										)}
@@ -850,6 +922,15 @@ export default function AgendamentoDetailModal({ agendamento, isOpen, onClose })
 													<p className="font-medium">
 														{format(adjustDate(agendamento.dataFim), "dd/MM/yyyy", { locale: ptBR })}
 													</p>
+												</div>
+											</div>
+										)}
+										{formatDiasSemana(agendamento.diasSemana) && (
+											<div className="flex items-center gap-3">
+												<Calendar className="h-4 w-4 text-indigo-600" />
+												<div>
+													<span className="text-xs text-indigo-600 uppercase tracking-wide">Dias da Semana</span>
+													<p className="font-medium">{formatDiasSemana(agendamento.diasSemana)}</p>
 												</div>
 											</div>
 										)}
