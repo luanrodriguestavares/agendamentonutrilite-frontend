@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { DatePicker } from "@/components/ui/date-picker"
 import { Switch } from "@/components/ui/switch"
+import { Checkbox } from "@/components/ui/checkbox"
 import { Users, Calendar, Clock, Building, FileText, DollarSign, AlertTriangle } from "lucide-react"
 import { TIMES_SETORES, CENTROS_CUSTO, validarAgendamentoTime, verificarRegrasFimDeSemana } from "../../utils/validacoes-agendamento"
 
@@ -17,11 +18,13 @@ const AgendamentoTimeForm = ({ dados, onChange, onError }) => {
         dataInicio: null,
         dataFim: null,
         dataFeriado: null,
-        quantidadeAlmocoLanche: "",
-        quantidadeJantarCeia: "",
-        quantidadeLancheExtra: "",
+        quantidadeAlmoco: "",
+        quantidadeLanche: "",
+        quantidadeJantar: "",
+        quantidadeCeia: "",
         refeitorio: "",
         observacao: "",
+        diasSemana: [],
         ...dados,
     })
 
@@ -41,6 +44,22 @@ const AgendamentoTimeForm = ({ dados, onChange, onError }) => {
             return
         }
         setFormData((prev) => ({ ...prev, [field]: value }))
+    }
+
+    const handleDiaSemanaChange = (dia, checked) => {
+        setFormData((prev) => {
+            if (checked) {
+                return {
+                    ...prev,
+                    diasSemana: [...prev.diasSemana, dia]
+                }
+            } else {
+                return {
+                    ...prev,
+                    diasSemana: prev.diasSemana.filter(d => d !== dia)
+                }
+            }
+        })
     }
 
     const handleFeriadoToggle = (checked) => {
@@ -312,55 +331,122 @@ const AgendamentoTimeForm = ({ dados, onChange, onError }) => {
                 </div>
             )}
 
-            {formData.turno === "A" && (
-                <div className="space-y-2 animate-in fade-in-50 duration-300">
-                    <Label htmlFor="quantidadeAlmocoLanche" className="flex items-center gap-2">
-                        <Users className="h-4 w-4 text-emerald-600" />
-                        Quantidade Almoço e Lanche:
+            {!formData.isFeriado && (
+                <div className="space-y-3 animate-in fade-in-50 duration-300">
+                    <Label className="flex items-center gap-2">
+                        <Calendar className="h-4 w-4 text-emerald-600" />
+                        Dias da Semana:
                     </Label>
-                    <Input
-                        type="number"
-                        id="quantidadeAlmocoLanche"
-                        value={formData.quantidadeAlmocoLanche}
-                        onChange={(e) => handleInputChange("quantidadeAlmocoLanche", e.target.value)}
-                        min="0"
-                        className="w-full"
-                        placeholder="Número de pessoas"
-                        required
-                    />
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                        {[
+                            { value: "segunda", label: "Segunda-feira" },
+                            { value: "terca", label: "Terça-feira" },
+                            { value: "quarta", label: "Quarta-feira" },
+                            { value: "quinta", label: "Quinta-feira" },
+                            { value: "sexta", label: "Sexta-feira" },
+                            { value: "sabado", label: "Sábado" },
+                            { value: "domingo", label: "Domingo" }
+                        ].map((dia) => (
+                            <div key={dia.value} className="flex items-center space-x-2">
+                                <Checkbox
+                                    id={`dia-${dia.value}`}
+                                    checked={formData.diasSemana.includes(dia.value)}
+                                    onCheckedChange={(checked) => handleDiaSemanaChange(dia.value, checked)}
+                                />
+                                <Label htmlFor={`dia-${dia.value}`} className="text-sm">
+                                    {dia.label}
+                                </Label>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
+
+            {formData.turno === "A" && (
+                <div className="space-y-4 animate-in fade-in-50 duration-300">
+                    <div className="space-y-2">
+                        <Label htmlFor="quantidadeAlmoco" className="flex items-center gap-2">
+                            <Users className="h-4 w-4 text-emerald-600" />
+                            Quantidade de Almoço:
+                        </Label>
+                        <Input
+                            type="number"
+                            id="quantidadeAlmoco"
+                            value={formData.quantidadeAlmoco}
+                            onChange={(e) => handleInputChange("quantidadeAlmoco", e.target.value)}
+                            min="0"
+                            className="w-full"
+                            placeholder="Número de pessoas"
+                            required
+                        />
+                    </div>
+                    
+                    <div className="space-y-2">
+                        <Label htmlFor="quantidadeLanche" className="flex items-center gap-2">
+                            <Users className="h-4 w-4 text-emerald-600" />
+                            Quantidade de Lanche: 
+                        </Label>
+                        <Input
+                            type="number"
+                            id="quantidadeLanche"
+                            value={formData.quantidadeLanche}
+                            onChange={(e) => handleInputChange("quantidadeLanche", e.target.value)}
+                            min="0"
+                            className="w-full"
+                            placeholder="Número de pessoas"
+                        />
+                    </div>
                 </div>
             )}
 
             {formData.turno === "B" && (
-                <div className="space-y-2 animate-in fade-in-50 duration-300">
-                    <Label htmlFor="quantidadeJantarCeia" className="flex items-center gap-2">
-                        <Users className="h-4 w-4 text-emerald-600" />
-                        Quantidade Jantar e Ceia:
-                    </Label>
-                    <Input
-                        type="number"
-                        id="quantidadeJantarCeia"
-                        value={formData.quantidadeJantarCeia}
-                        onChange={(e) => handleInputChange("quantidadeJantarCeia", e.target.value)}
-                        min="0"
-                        className="w-full"
-                        placeholder="Número de pessoas"
-                        required
-                    />
+                <div className="space-y-4 animate-in fade-in-50 duration-300">
+                    <div className="space-y-2">
+                        <Label htmlFor="quantidadeJantar" className="flex items-center gap-2">
+                            <Users className="h-4 w-4 text-emerald-600" />
+                            Quantidade de Jantar:
+                        </Label>
+                        <Input
+                            type="number"
+                            id="quantidadeJantar"
+                            value={formData.quantidadeJantar}
+                            onChange={(e) => handleInputChange("quantidadeJantar", e.target.value)}
+                            min="0"
+                            className="w-full"
+                            placeholder="Número de pessoas"
+                            required
+                        />
+                    </div>
+                    
+                    <div className="space-y-2">
+                        <Label htmlFor="quantidadeCeia" className="flex items-center gap-2">
+                            <Users className="h-4 w-4 text-emerald-600" />
+                            Quantidade de Ceia: 
+                        </Label>
+                        <Input
+                            type="number"
+                            id="quantidadeCeia"
+                            value={formData.quantidadeCeia}
+                            onChange={(e) => handleInputChange("quantidadeCeia", e.target.value)}
+                            min="0"
+                            className="w-full"
+                            placeholder="Número de pessoas"
+                        />
+                    </div>
                 </div>
             )}
 
             {formData.turno === "ADM" && (
                 <div className="space-y-2 animate-in fade-in-50 duration-300">
-                    <Label htmlFor="quantidadeLancheExtra" className="flex items-center gap-2">
+                    <Label htmlFor="quantidadeAlmoco" className="flex items-center gap-2">
                         <Users className="h-4 w-4 text-emerald-600" />
-                        Quantidade Lanche Extra:
+                        Quantidade de Almoço:
                     </Label>
                     <Input
                         type="number"
-                        id="quantidadeLancheExtra"
-                        value={formData.quantidadeLancheExtra}
-                        onChange={(e) => handleInputChange("quantidadeLancheExtra", e.target.value)}
+                        id="quantidadeAlmoco"
+                        value={formData.quantidadeAlmoco}
+                        onChange={(e) => handleInputChange("quantidadeAlmoco", e.target.value)}
                         min="0"
                         className="w-full"
                         placeholder="Número de pessoas"

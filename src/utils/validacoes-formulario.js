@@ -59,6 +59,10 @@ export const validarHomeOffice = (formData) => {
         }
     }
 
+    if (!formData.diasSemana || formData.diasSemana.length === 0) {
+        erros.push("Pelo menos um dia da semana deve ser selecionado")
+    }
+
     const validacaoHorario = validarHomeOfficeHorario(formData)
     if (!validacaoHorario.permitido) {
         erros.push(`Horário limite excedido: ${validacaoHorario.mensagem}`)
@@ -97,16 +101,22 @@ export const validarAgendamentoTime = (formData) => {
     }
 
     if (formData.turno === "A") {
-        if (!formData.quantidadeAlmocoLanche || formData.quantidadeAlmocoLanche <= 0) {
-            erros.push("Quantidade de Almoço e Lanche é obrigatória para o turno A")
+        if (!formData.quantidadeAlmoco || formData.quantidadeAlmoco <= 0) {
+            erros.push("Quantidade de Almoço é obrigatória para o turno A")
         }
     } else if (formData.turno === "B") {
-        if (!formData.quantidadeJantarCeia || formData.quantidadeJantarCeia <= 0) {
-            erros.push("Quantidade de Jantar e Ceia é obrigatória para o turno B")
+        if (!formData.quantidadeJantar || formData.quantidadeJantar <= 0) {
+            erros.push("Quantidade de Jantar é obrigatória para o turno B")
         }
     } else if (formData.turno === "ADM") {
-        if (!formData.quantidadeLancheExtra || formData.quantidadeLancheExtra <= 0) {
-            erros.push("Quantidade de Lanche Extra é obrigatória para o turno ADM")
+        if (!formData.quantidadeAlmoco || formData.quantidadeAlmoco <= 0) {
+            erros.push("Quantidade de Almoço é obrigatória para o turno ADM")
+        }
+    }
+
+    if (!formData.isFeriado) {
+        if (!formData.diasSemana || formData.diasSemana.length === 0) {
+            erros.push("Pelo menos um dia da semana deve ser selecionado")
         }
     }
 
@@ -244,6 +254,10 @@ export const validarRotaExtra = (formData) => {
     }
     if (formData.quantidadeUbajara === undefined || formData.quantidadeUbajara === null || formData.quantidadeUbajara === "") {
         erros.push("Quantidade de Ubajara é obrigatória")
+    }
+
+    if (!formData.diasSemana || formData.diasSemana.length === 0) {
+        erros.push("Pelo menos um dia da semana deve ser selecionado")
     }
 
     const validacaoHorario = validarRotaExtraHorario(formData)

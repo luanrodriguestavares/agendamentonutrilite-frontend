@@ -4,6 +4,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { DatePicker } from "@/components/ui/date-picker"
+import { Checkbox } from "@/components/ui/checkbox"
 import { Calendar, Users, DollarSign, MapPin, FileText } from "lucide-react"
 import { TIMES_SETORES, CENTROS_CUSTO, validarRotaExtra, verificarRegrasFimDeSemana } from "../../utils/validacoes-agendamento"
 
@@ -17,6 +18,7 @@ const RotaExtraForm = ({ dados, onChange, onError }) => {
         quantidadeTiangua: "",
         quantidadeUbajara: "",
         observacao: "",
+        diasSemana: [],
         ...dados,
     })
 
@@ -26,6 +28,22 @@ const RotaExtraForm = ({ dados, onChange, onError }) => {
 
     const handleInputChange = (field, value) => {
         setFormData((prev) => ({ ...prev, [field]: value }))
+    }
+
+    const handleDiaSemanaChange = (dia, checked) => {
+        setFormData((prev) => {
+            if (checked) {
+                return {
+                    ...prev,
+                    diasSemana: [...prev.diasSemana, dia]
+                }
+            } else {
+                return {
+                    ...prev,
+                    diasSemana: prev.diasSemana.filter(d => d !== dia)
+                }
+            }
+        })
     }
 
     const handleDataChange = (field, date) => {
@@ -131,6 +149,35 @@ const RotaExtraForm = ({ dados, onChange, onError }) => {
                         Data Fim:
                     </Label>
                     <DatePicker date={formData.dataFim} onChange={(date) => handleDataChange("dataFim", date)} />
+                </div>
+            </div>
+
+            <div className="space-y-3 animate-in fade-in-50 duration-300">
+                <Label className="flex items-center gap-2">
+                    <Calendar className="h-4 w-4 text-emerald-600" />
+                    Dias da Semana:
+                </Label>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    {[
+                        { value: "segunda", label: "Segunda-feira" },
+                        { value: "terca", label: "Terça-feira" },
+                        { value: "quarta", label: "Quarta-feira" },
+                        { value: "quinta", label: "Quinta-feira" },
+                        { value: "sexta", label: "Sexta-feira" },
+                        { value: "sabado", label: "Sábado" },
+                        { value: "domingo", label: "Domingo" }
+                    ].map((dia) => (
+                        <div key={dia.value} className="flex items-center space-x-2">
+                            <Checkbox
+                                id={`dia-${dia.value}`}
+                                checked={formData.diasSemana.includes(dia.value)}
+                                onCheckedChange={(checked) => handleDiaSemanaChange(dia.value, checked)}
+                            />
+                            <Label htmlFor={`dia-${dia.value}`} className="text-sm">
+                                {dia.label}
+                            </Label>
+                        </div>
+                    ))}
                 </div>
             </div>
 
