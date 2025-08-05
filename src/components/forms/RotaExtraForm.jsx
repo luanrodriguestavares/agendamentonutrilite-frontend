@@ -57,18 +57,19 @@ const RotaExtraForm = ({ dados, onChange, onError }) => {
 
         const hoje = new Date()
         hoje.setHours(0, 0, 0, 0)
+        const ontem = new Date(hoje)
+        ontem.setDate(ontem.getDate() - 1)
 
-        if (date < hoje) {
-            onError("Data inválida", "A data não pode ser anterior à data atual.")
+        if (date < ontem) {
+            onError("Data inválida", "A data não pode ser anterior ao dia anterior.")
             return
         }
 
-        if (field === "dataInicio") {
-            const resultado = validarRotaExtra(formData)
-            if (!resultado.permitido) {
-                onError("Horário limite excedido", resultado.mensagem)
-                return
-            }
+        const dadosTemp = { ...formData, [field]: date }
+        const resultado = validarRotaExtra(dadosTemp)
+        if (!resultado.permitido) {
+            onError("Agendamento não permitido", resultado.mensagem)
+            return
         }
 
         setFormData((prev) => ({ ...prev, [field]: date }))

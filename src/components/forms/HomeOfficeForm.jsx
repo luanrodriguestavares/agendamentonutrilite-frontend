@@ -5,7 +5,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Checkbox } from "@/components/ui/checkbox"
 import { DatePicker } from "@/components/ui/date-picker"
 import { Calendar, Clock, Building, Utensils, FileText, Users } from "lucide-react"
-import { TIMES_SETORES, verificarRegrasFimDeSemana } from "../../utils/validacoes-agendamento"
+import { TIMES_SETORES, verificarRegrasFimDeSemana, validarHomeOffice } from "../../utils/validacoes-agendamento"
 
 const HomeOfficeForm = ({ dados, onChange, onError }) => {
     const [formData, setFormData] = useState({
@@ -55,20 +55,7 @@ const HomeOfficeForm = ({ dados, onChange, onError }) => {
         const diaSemana = date.getDay()
         const ehFinalDeSemana = diaSemana === 0 || diaSemana === 6
 
-        if (ehFinalDeSemana) {
-            if (agora.getDay() === 5) {
-                const limite = new Date(agora)
-                limite.setHours(9, 0, 0, 0)
-
-                if (agora > limite) {
-                    onError(
-                        "Horário limite excedido",
-                        "Em sextas-feiras, agendamentos para fins de semana devem ser feitos até às 09:00h.",
-                    )
-                    return false
-                }
-            }
-        } else if (date.getTime() === hoje.getTime()) {
+        if (date.getTime() === hoje.getTime()) {
             const limiteAlmoco = new Date(hoje)
             limiteAlmoco.setHours(7, 30, 0, 0)
 
@@ -130,6 +117,13 @@ const HomeOfficeForm = ({ dados, onChange, onError }) => {
         }
 
         if (!validarHorarioAgendamento(date)) {
+            return
+        }
+
+        const dadosTemp = { ...formData, [field]: date }
+        const resultado = validarHomeOffice(dadosTemp)
+        if (!resultado.permitido) {
+            onError("Agendamento não permitido", resultado.mensagem)
             return
         }
 

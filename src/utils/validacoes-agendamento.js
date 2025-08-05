@@ -318,9 +318,14 @@ export function validarHomeOffice(data) {
     if (diaSemanaInicio === 0 || diaSemanaInicio === 6) {
         const hoje = new Date()
         const proximaSexta = new Date(hoje)
-        const diasAteSexta = (5 - hoje.getDay() + 7) % 7
-        proximaSexta.setDate(hoje.getDate() + diasAteSexta)
-        proximaSexta.setHours(9, 0, 0, 0)
+
+        if (hoje.getDay() === 5) {
+            proximaSexta.setHours(9, 0, 0, 0)
+        } else {
+            const diasAteSexta = (5 - hoje.getDay() + 7) % 7
+            proximaSexta.setDate(hoje.getDate() + diasAteSexta)
+            proximaSexta.setHours(9, 0, 0, 0)
+        }
 
         const proximoDomingo = new Date(proximaSexta)
         proximoDomingo.setDate(proximaSexta.getDate() + 2)
@@ -402,9 +407,14 @@ export function validarHomeOffice(data) {
         if (diaSemanaFim === 0 || diaSemanaFim === 6) {
             const hoje = new Date()
             const proximaSexta = new Date(hoje)
-            const diasAteSexta = (5 - hoje.getDay() + 7) % 7
-            proximaSexta.setDate(hoje.getDate() + diasAteSexta)
-            proximaSexta.setHours(9, 0, 0, 0)
+
+            if (hoje.getDay() === 5) {
+                proximaSexta.setHours(9, 0, 0, 0)
+            } else {
+                const diasAteSexta = (5 - hoje.getDay() + 7) % 7
+                proximaSexta.setDate(hoje.getDate() + diasAteSexta)
+                proximaSexta.setHours(9, 0, 0, 0)
+            }
 
             const proximoDomingo = new Date(proximaSexta)
             proximoDomingo.setDate(proximaSexta.getDate() + 2)
@@ -535,27 +545,80 @@ export function validarRotaExtra(data) {
     const agora = new Date()
     const diaSemana = agora.getDay()
 
+    if (diaSemana >= 1 && diaSemana <= 5) {
+        if (data.dataInicio) {
+            const dataInicio = new Date(data.dataInicio)
+            const hoje = new Date()
+            hoje.setHours(0, 0, 0, 0)
+            dataInicio.setHours(0, 0, 0, 0)
+
+            if (dataInicio.getTime() === hoje.getTime()) {
+                return {
+                    permitido: false,
+                    mensagem: "Agendamento para o mesmo dia: deve ser feito no dia anterior.",
+                }
+            }
+        }
+    }
+
     if (data.dataInicio) {
-        const verificarFimDeSemanaInicio = verificarRegrasFimDeSemana(data.dataInicio)
-        if (!verificarFimDeSemanaInicio.permitido) {
-            return verificarFimDeSemanaInicio
+        const dataInicio = new Date(data.dataInicio)
+        const diaSemanaInicio = dataInicio.getDay()
+
+        if (diaSemanaInicio === 0 || diaSemanaInicio === 6) {
+            const hoje = new Date()
+            const proximaSexta = new Date(hoje)
+
+            if (diaSemana === 5) {
+                proximaSexta.setHours(11, 0, 0, 0)
+            } else {
+                const diasAteSexta = (5 - diaSemana + 7) % 7
+                proximaSexta.setDate(hoje.getDate() + diasAteSexta)
+                proximaSexta.setHours(11, 0, 0, 0)
+            }
+
+            const proximoDomingo = new Date(proximaSexta)
+            proximoDomingo.setDate(proximaSexta.getDate() + 2)
+            proximoDomingo.setHours(23, 59, 59, 999)
+
+            if (dataInicio >= proximaSexta && dataInicio <= proximoDomingo) {
+                if (agora > proximaSexta) {
+                    return {
+                        permitido: false,
+                        mensagem: "Rota Extra para o fim de semana: Agendar até sexta-feira às 11:00h.",
+                    }
+                }
+            }
         }
     }
 
     if (data.dataFim) {
-        const verificarFimDeSemanaFim = verificarRegrasFimDeSemana(data.dataFim)
-        if (!verificarFimDeSemanaFim.permitido) {
-            return verificarFimDeSemanaFim
-        }
-    }
+        const dataFim = new Date(data.dataFim)
+        const diaSemanaFim = dataFim.getDay()
 
-    if (diaSemana === 5) {
-        const limite = new Date(agora)
-        limite.setHours(11, 0, 0, 0)
-        if (agora > limite) {
-            return {
-                permitido: false,
-                mensagem: "Rota Extra: Agendar até sexta-feira às 11:00h.",
+        if (diaSemanaFim === 0 || diaSemanaFim === 6) {
+            const hoje = new Date()
+            const proximaSexta = new Date(hoje)
+
+            if (diaSemana === 5) {
+                proximaSexta.setHours(11, 0, 0, 0)
+            } else {
+                const diasAteSexta = (5 - diaSemana + 7) % 7
+                proximaSexta.setDate(hoje.getDate() + diasAteSexta)
+                proximaSexta.setHours(11, 0, 0, 0)
+            }
+
+            const proximoDomingo = new Date(proximaSexta)
+            proximoDomingo.setDate(proximaSexta.getDate() + 2)
+            proximoDomingo.setHours(23, 59, 59, 999)
+
+            if (dataFim >= proximaSexta && dataFim <= proximoDomingo) {
+                if (agora > proximaSexta) {
+                    return {
+                        permitido: false,
+                        mensagem: "Rota Extra para o fim de semana: Agendar até sexta-feira às 11:00h.",
+                    }
+                }
             }
         }
     }
