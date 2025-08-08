@@ -194,7 +194,7 @@ const RotaExtraForm = ({ dados, onChange, onError }) => {
                         onChange={(e) => handleInputChange("quantidadeTiangua", e.target.value)}
                         min="0"
                         className="w-full"
-                        placeholder="Número de pessoas"
+                        placeholder="Digite a quantidade"
                     />
                 </div>
 
@@ -210,7 +210,7 @@ const RotaExtraForm = ({ dados, onChange, onError }) => {
                         onChange={(e) => handleInputChange("quantidadeUbajara", e.target.value)}
                         min="0"
                         className="w-full"
-                        placeholder="Número de pessoas"
+                        placeholder="Digite a quantidade "
                     />
                 </div>
             </div>

@@ -257,11 +257,13 @@ export const validarRotaExtra = (formData) => {
     if (!formData.dataFim) {
         erros.push("Data de fim é obrigatória")
     }
-    if (formData.quantidadeTiangua === undefined || formData.quantidadeTiangua === null || formData.quantidadeTiangua === "") {
-        erros.push("Quantidade de Tianguá é obrigatória")
-    }
-    if (formData.quantidadeUbajara === undefined || formData.quantidadeUbajara === null || formData.quantidadeUbajara === "") {
-        erros.push("Quantidade de Ubajara é obrigatória")
+
+   
+    const quantidadeTiangua = parseInt(formData.quantidadeTiangua) || 0
+    const quantidadeUbajara = parseInt(formData.quantidadeUbajara) || 0
+    
+    if (quantidadeTiangua <= 0 && quantidadeUbajara <= 0) {
+        erros.push("Pelo menos uma rota deve ser preenchida (Tianguá ou Ubajara)")
     }
 
     if (!formData.diasSemana || formData.diasSemana.length === 0) {
