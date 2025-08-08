@@ -111,6 +111,7 @@ const RotaExtraForm = ({ dados, onChange, onError }) => {
                         <SelectItem value="Feriado">Feriado</SelectItem>
                         <SelectItem value="Sabado">Sábado</SelectItem>
                         <SelectItem value="Domingo">Domingo</SelectItem>
+                        <SelectItem value="Dia Util">Dia útil</SelectItem>
                     </SelectContent>
                 </Select>
             </div>

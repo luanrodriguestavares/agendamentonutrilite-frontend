@@ -31,7 +31,7 @@ const FormularioAgendamento = ({ formData, setFormData, onSubmit }) => {
 
 	const tiposAgendamentoPorServico = {
 		Refeição: [
-			{ value: "Home Office", label: "Agendamento Home Office" },
+			{ value: "Home Office", label: "Agendamento Home Office/Individual" },
 			{ value: "Administrativo - Lanche", label: "Solicitação Lanche" },
 			{ value: "Agendamento para Time", label: "Agendamento para Time" },
 			{ value: "Agendamento para Visitante", label: "Agendamento para Visitante" },
@@ -164,9 +164,9 @@ const FormularioAgendamento = ({ formData, setFormData, onSubmit }) => {
 				/>
 			)}
 
-			<Card className="mb-8 overflow-hidden">
+<			Card className="mb-8 overflow-hidden">
 				<div className="bg-emerald-50 border-b px-4 py-3">
-					<h5 className="text-lg font-semibold text-emerald-800">Prazos de Agendamentos</h5>
+					<h5 className="text-lg font-semibold text-emerald-800">Prazos de Agendamentos e Cancelamentos</h5>
 				</div>
 				<div className="p-4 pt-5 bg-white">
 					<div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
@@ -177,7 +177,8 @@ const FormularioAgendamento = ({ formData, setFormData, onSubmit }) => {
 									<strong>ALMOÇO</strong> do dia solicitado:
 								</span>
 							</p>
-							<p className="text-sm ml-4 mt-1">Até 07:30h do mesmo dia</p>
+							<p className="text-sm ml-4 mt-1"><strong>Agendamento:</strong> Até 07:30h do mesmo dia</p>
+							<p className="text-sm ml-4 mt-1"><strong>Cancelamento:</strong> Até 07:35h do mesmo dia</p>
 						</div>
 
 						<div className="bg-gray-50 border border-gray-200 p-3 rounded-md">
@@ -187,7 +188,8 @@ const FormularioAgendamento = ({ formData, setFormData, onSubmit }) => {
 									<strong>ALMOÇO</strong> do dia seguinte:
 								</span>
 							</p>
-							<p className="text-sm ml-4 mt-1">Qualquer horário no dia anterior</p>
+							<p className="text-sm ml-4 mt-1"><strong>Agendamento:</strong> Qualquer horário do dia anterior</p>
+							<p className="text-sm ml-4 mt-1"><strong>Cancelamento:</strong> Qualquer horário do dia anterior</p>
 						</div>
 
 						<div className="bg-gray-50 border border-gray-200 p-3 rounded-md">
@@ -197,7 +199,8 @@ const FormularioAgendamento = ({ formData, setFormData, onSubmit }) => {
 									<strong>LANCHE DAS 16h</strong> do dia solicitado:
 								</span>
 							</p>
-							<p className="text-sm ml-4 mt-1">Até 09:00h do mesmo dia</p>
+							<p className="text-sm ml-4 mt-1"><strong>Agendamento:</strong> Até 09:00h do mesmo dia</p>
+							<p className="text-sm ml-4 mt-1"><strong>Cancelamento:</strong> Até 09:05h do mesmo dia</p>
 						</div>
 
 						<div className="bg-gray-50 border border-gray-200 p-3 rounded-md">
@@ -207,7 +210,8 @@ const FormularioAgendamento = ({ formData, setFormData, onSubmit }) => {
 									<strong>LANCHE DAS 16h</strong> do dia seguinte:
 								</span>
 							</p>
-							<p className="text-sm ml-4 mt-1">Qualquer horário no dia anterior</p>
+							<p className="text-sm ml-4 mt-1"><strong>Agendamento:</strong> Qualquer horário do dia anterior</p>
+							<p className="text-sm ml-4 mt-1"><strong>Cancelamento:</strong> Qualquer horário do dia anterior</p>
 						</div>
 
 						<div className="bg-gray-50 border border-gray-200 p-3 rounded-md">
@@ -217,7 +221,8 @@ const FormularioAgendamento = ({ formData, setFormData, onSubmit }) => {
 									<strong>JANTAR e CEIA</strong> do dia solicitado:
 								</span>
 							</p>
-							<p className="text-sm ml-4 mt-1">Até 07:30h do mesmo dia</p>
+							<p className="text-sm ml-4 mt-1"><strong>Agendamento:</strong> Até 07:30h do mesmo dia</p>
+							<p className="text-sm ml-4 mt-1"><strong>Cancelamento:</strong> Até 09:05h do mesmo dia</p>
 						</div>
 
 						<div className="bg-gray-50 border border-gray-200 p-3 rounded-md">
@@ -227,7 +232,8 @@ const FormularioAgendamento = ({ formData, setFormData, onSubmit }) => {
 									<strong>JANTAR e CEIA</strong> do dia seguinte:
 								</span>
 							</p>
-							<p className="text-sm ml-4 mt-1">Qualquer horário no dia anterior</p>
+							<p className="text-sm ml-4 mt-1"><strong>Agendamento:</strong> Qualquer horário do dia anterior</p>
+							<p className="text-sm ml-4 mt-1"><strong>Cancelamento:</strong> Qualquer horário do dia anterior</p>
 						</div>
 
 						<div className="bg-gray-50 border border-gray-200 p-3 rounded-md">
@@ -237,7 +243,8 @@ const FormularioAgendamento = ({ formData, setFormData, onSubmit }) => {
 									<strong>COFFEE BREAK</strong>:
 								</span>
 							</p>
-							<p className="text-sm ml-4 mt-1">Agendar até 12:00h o dia anterior</p>
+							<p className="text-sm ml-4 mt-1"><strong>Agendamento:</strong> Até 12:00h do dia anterior</p>
+							<p className="text-sm ml-4 mt-1"><strong>Cancelamento:</strong> Até 12:00h do dia anterior</p>
 						</div>
 
 						<div className="bg-gray-50 border border-gray-200 p-3 rounded-md">
@@ -247,7 +254,9 @@ const FormularioAgendamento = ({ formData, setFormData, onSubmit }) => {
 									<strong>ROTA EXTRA</strong>:
 								</span>
 							</p>
-							<p className="text-sm ml-4 mt-1">Agendar até sexta-feira às 11:00h</p>
+							<p className="text-sm ml-4 mt-1"><strong>Agendamento Dia Útil:</strong> Qualquer horário do dia anterior</p>
+							<p className="text-sm ml-4 mt-1"><strong>Agendamento Fim de Semana:</strong> Até sexta-feira às 11:00h</p>
+							<p className="text-sm ml-4 mt-1"><strong>Cancelamento:</strong> Até sexta-feira às 11:00h</p>
 						</div>
 
 						<div className="bg-gray-50 border border-gray-200 p-3 rounded-md md:col-span-2">
@@ -258,6 +267,17 @@ const FormularioAgendamento = ({ formData, setFormData, onSubmit }) => {
 								</span>
 							</p>
 							<p className="text-sm ml-4 mt-1">Sexta-feira até às 09:00h</p>
+						</div>
+					</div>
+
+					<div className="mt-5 p-4 bg-emerald-50 border border-emerald-200 rounded-lg">
+						<p className="text-sm font-medium text-emerald-800 mb-2">
+							<strong>REGRAS ESPECÍFICAS DE CANCELAMENTO:</strong>
+						</p>
+						<div className="space-y-2 text-sm text-emerald-800">
+							<p><strong>• Fins de semana/Feriado - Almoço:</strong> Cancelamento até 13:30h do dia anterior</p>
+							<p><strong>• Fins de semana/Feriado - Jantar e Ceia:</strong> Cancelamento até 12:00h do dia solicitado</p>
+							<p><strong>• Fins de semana/Feriado - Lanche:</strong> Cancelamento até 12:00h do dia solicitado</p>
 						</div>
 					</div>
 
@@ -388,3 +408,4 @@ const FormularioAgendamento = ({ formData, setFormData, onSubmit }) => {
 }
 
 export default FormularioAgendamento
+

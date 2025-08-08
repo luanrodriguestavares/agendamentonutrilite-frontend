@@ -284,6 +284,7 @@ export default function Admin() {
 	const [cancelModalOpen, setCancelModalOpen] = useState(false)
 	const [selectedAgendamentoForCancel, setSelectedAgendamentoForCancel] = useState(null)
 	const [cancelReason, setCancelReason] = useState("")
+	const [cancelLoading, setCancelLoading] = useState(false)
 	const [advancedFiltersOpen, setAdvancedFiltersOpen] = useState(false)
 	const [sortConfig, setSortConfig] = useState({ key: "createdAt", direction: "desc" })
 
@@ -599,7 +600,7 @@ export default function Admin() {
 		if (!selectedAgendamentoForCancel) return
 
 		try {
-			setLoadingAction(selectedAgendamentoForCancel.id)
+			setCancelLoading(true)
 			await cancelAgendamento(selectedAgendamentoForCancel.id, {
 				tipo: selectedAgendamentoForCancel.tipoAgendamento,
 				motivo: cancelReason,
@@ -624,7 +625,7 @@ export default function Admin() {
 			setErrorMessage(errorMessage)
 			setErrorModalOpen(true)
 		} finally {
-			setLoadingAction(null)
+			setCancelLoading(false)
 		}
 	}
 
@@ -1029,6 +1030,7 @@ export default function Admin() {
 			"quantidadeVisitantes",
 			"acompanhante",
 			"centroCusto",
+			"rateio",
 			"observacao",
 			"createdAt",
 			"actions",
@@ -1377,9 +1379,8 @@ export default function Admin() {
 									size="sm"
 									onClick={() => handleCancelClick(ag)}
 									className="bg-red-600 hover:bg-red-700"
-									disabled={loadingAction === ag.id}
 								>
-									{loadingAction === ag.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <X className="h-3 w-3" />}
+									<X className="h-3 w-3" />
 								</Button>
 							</>
 						)}
@@ -1838,11 +1839,23 @@ export default function Admin() {
 								setCancelReason("")
 								setSelectedAgendamentoForCancel(null)
 							}}
+							disabled={cancelLoading}
 						>
 							Cancelar
 						</Button>
-						<Button onClick={handleCancelConfirm} className="bg-red-600 hover:bg-red-700">
-							Confirmar Cancelamento
+						<Button
+							onClick={handleCancelConfirm}
+							className="bg-red-600 hover:bg-red-700"
+							disabled={cancelLoading}
+						>
+							{cancelLoading ? (
+								<>
+									<Loader2 className="h-4 w-4 animate-spin mr-2" />
+									Cancelando...
+								</>
+							) : (
+								"Confirmar Cancelamento"
+							)}
 						</Button>
 					</DialogFooter>
 				</DialogContent>

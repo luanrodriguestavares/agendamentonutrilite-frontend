@@ -139,6 +139,7 @@ const CoffeeBreakForm = ({ dados, onChange, onError }) => {
                         </SelectTrigger>
                         <SelectContent>
                             <SelectItem value="A">A</SelectItem>
+                            <SelectItem value="B">B</SelectItem>
                             <SelectItem value="ADM">ADM</SelectItem>
                         </SelectContent>
                     </Select>
@@ -291,7 +292,8 @@ const CoffeeBreakForm = ({ dados, onChange, onError }) => {
                     onChange={(e) => handleInputChange("observacao", e.target.value)}
                     rows={3}
                     className="w-full resize-none"
-                    placeholder="Informações adicionais sobre o coffee break..."
+                    placeholder={formData.rateio === "Sim" ? "Informe os centros de custo para rateio..." : "Informações adicionais sobre o coffee break..."}
+                    required={formData.rateio === "Sim"}
                 />
             </div>
         </div>

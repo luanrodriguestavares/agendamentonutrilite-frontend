@@ -62,7 +62,7 @@ function App() {
 			})
 		} catch (error) {
 			toast({
-				title: "Erro no envio de dados",
+				title: "Erro no envio de dados, verifique os dados informados e tente novamente.",
 				description: error.response?.data?.message || error.response?.data?.error || "Ocorreu um erro ao processar seu agendamento. Tente novamente.",
 				variant: "destructive",
 			})

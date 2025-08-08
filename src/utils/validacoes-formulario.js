@@ -127,9 +127,6 @@ export const validarLancheIndividual = (formData) => {
     if (!formData.turno?.trim()) {
         erros.push("Turno é obrigatório")
     }
-    if (!formData.refeitorio?.trim()) {
-        erros.push("Refeitório é obrigatório")
-    }
     if (!formData.data) {
         erros.push("Data é obrigatória")
     }
@@ -160,11 +157,20 @@ export const validarVisitante = (formData) => {
     if (!formData.refeitorio?.trim()) {
         erros.push("Refeitório é obrigatório")
     }
+    if (!formData.centroCusto?.trim()) {
+        erros.push("Centro de custo é obrigatório")
+    }
+    if (!formData.rateio?.trim()) {
+        erros.push("Rateio é obrigatório")
+    }
     if (!formData.data) {
         erros.push("Data é obrigatória")
     }
     if (!formData.refeicoes?.trim()) {
         erros.push("Refeições é obrigatório")
+    }
+    if (formData.rateio === "Sim" && !formData.observacao?.trim()) {
+        erros.push("Observação é obrigatória quando há rateio. Informe os centros de custo para rateio.")
     }
 
     return erros
@@ -202,6 +208,9 @@ export const validarCoffeeBreak = (formData) => {
     }
     if (!formData.localEntrega?.trim()) {
         erros.push("Local de entrega é obrigatório")
+    }
+    if (formData.rateio === "Sim" && !formData.observacao?.trim()) {
+        erros.push("Observação é obrigatória quando há rateio. Informe os centros de custo para rateio.")
     }
 
     const validacaoHorario = validarCoffeeBreakHorario(formData)

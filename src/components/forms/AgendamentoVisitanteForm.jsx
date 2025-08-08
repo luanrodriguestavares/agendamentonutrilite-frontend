@@ -4,8 +4,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { DatePicker } from "@/components/ui/date-picker"
-import { Calendar, Building, Users, User, FileText, Clock, Coffee } from "lucide-react"
-import { verificarRegrasFimDeSemana } from "../../utils/validacoes-agendamento"
+import { Calendar, Building, Users, User, FileText, Clock, Coffee, DollarSign, AlertCircle } from "lucide-react"
+import { verificarRegrasFimDeSemana, CENTROS_CUSTO } from "../../utils/validacoes-agendamento"
 
 const AgendamentoVisitanteForm = ({ dados, onChange, onError }) => {
     const [formData, setFormData] = useState({
@@ -14,6 +14,7 @@ const AgendamentoVisitanteForm = ({ dados, onChange, onError }) => {
         quantidadeVisitantes: "",
         acompanhante: "",
         centroCusto: "",
+        rateio: "",
         observacao: "",
         turno: "",
         refeicoes: "Almoço",
@@ -162,6 +163,58 @@ const AgendamentoVisitanteForm = ({ dados, onChange, onError }) => {
                 </div>
             </div>
 
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                    <Label htmlFor="selectCentroCusto" className="flex items-center gap-2">
+                        <DollarSign className="h-4 w-4 text-emerald-600" />
+                        Centro de Custo:
+                    </Label>
+                    <Select
+                        value={formData.centroCusto}
+                        onValueChange={(value) => handleInputChange("centroCusto", value)}
+                        required
+                    >
+                        <SelectTrigger id="selectCentroCusto" className="w-full">
+                            <SelectValue placeholder="Selecione" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {CENTROS_CUSTO.map((centro) => (
+                                <SelectItem key={centro} value={centro}>
+                                    {centro}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                </div>
+
+                <div className="space-y-2">
+                    <Label htmlFor="selectRateio" className="flex items-center gap-2">
+                        <DollarSign className="h-4 w-4 text-emerald-600" />
+                        Haverá rateio?
+                    </Label>
+                    <Select
+                        value={formData.rateio}
+                        onValueChange={(value) => handleInputChange("rateio", value)}
+                        required
+                    >
+                        <SelectTrigger id="selectRateio" className="w-full">
+                            <SelectValue placeholder="Selecione" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="Sim">Sim</SelectItem>
+                            <SelectItem value="Não">Não</SelectItem>
+                        </SelectContent>
+                    </Select>
+                </div>
+            </div>
+
+            {formData.rateio === "Sim" && (
+                <p className="text-sm bg-green-100 border border-green-900/30 rounded-lg p-3 mt-2 flex items-center gap-1.5">
+                    <AlertCircle className="h-4 w-4" />
+                    Por favor, informe os centros de custo para rateio no campo de observações.
+                </p>
+            )}
+
             <div className="space-y-2">
                 <Label htmlFor="data" className="flex items-center gap-2">
                     <Calendar className="h-4 w-4 text-emerald-600" />
@@ -195,7 +248,8 @@ const AgendamentoVisitanteForm = ({ dados, onChange, onError }) => {
                     onChange={(e) => handleInputChange("observacao", e.target.value)}
                     rows={3}
                     className="w-full resize-none"
-                    placeholder="Informações adicionais sobre o visitante..."
+                    placeholder={formData.rateio === "Sim" ? "Informe os centros de custo para rateio..." : "Informações adicionais sobre o visitante..."}
+                    required={formData.rateio === "Sim"}
                 />
             </div>
         </div>

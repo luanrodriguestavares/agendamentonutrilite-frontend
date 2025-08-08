@@ -12,7 +12,7 @@ const SolicitacaoLancheForm = ({ dados, onChange, onError }) => {
         timeSetor: "",
         data: null,
         turno: "",
-        refeitorio: "",
+        refeitorio: "Industria",
         refeicoes: "Lanche Individual",
         observacao: "",
         ...dados,
@@ -156,19 +156,16 @@ const SolicitacaoLancheForm = ({ dados, onChange, onError }) => {
                 </div>
 
                 <div className="space-y-2">
-                    <Label htmlFor="selectRefeitorio" className="flex items-center gap-2">
+                    <Label htmlFor="refeitorio" className="flex items-center gap-2">
                         <Building className="h-4 w-4 text-emerald-600" />
                         Refeitório:
                     </Label>
-                    <Select value={formData.refeitorio} onValueChange={(value) => handleInputChange("refeitorio", value)} required>
-                        <SelectTrigger id="selectRefeitorio" className="w-full">
-                            <SelectValue placeholder="Selecione" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="Fazenda">Fazenda</SelectItem>
-                            <SelectItem value="Industria">Indústria</SelectItem>
-                        </SelectContent>
-                    </Select>
+                    <Input
+                        id="refeitorio"
+                        value="Indústria"
+                        disabled
+                        className="w-full bg-gray-100"
+                    />
                 </div>
             </div>
 

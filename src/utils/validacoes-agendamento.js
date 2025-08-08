@@ -4,52 +4,89 @@
 
 // Centros de custo disponíveis
 export const CENTROS_CUSTO = [
-    "101002-SUPPLY",
-    "101003-SUPPLY",
-    "101004-RH",
-    "101005-OPEX",
-    "101007-OPEX",
-    "101009-SUPPLY",
-    "101010-ENGENHARIA",
-    "101011-ENGENHARIA",
-    "102000-PESQUISA",
-    "201001-MANUFATURA",
-    "201002-MANUFATURA",
-    "201003-MANUFATURA",
-    "201004-MANUFATURA",
-    "201006-MANUFATURA",
-    "201007-MANUTENÇÃO",
-    "201008-SUPPLY",
-    "201009-SUPPLY",
-    "201011-GPM",
-    "201012-QUALIDADE",
-    "201013-QUALIDADE",
+    "102023-AGRIAO - P&D",
+    "301009-AGRIAO",
     "301001-AGRO",
-    "301002-AGRO",
-    "301006-AGRO",
-    "301007-MANUTENÇÃO",
-    "301009-AGRO",
-    "401001-OPEX",
-    "401003-OPEX",
-    "401004-MANUTENÇÃO",
-    "401005-AGRO",
-    "401006-AGRO",
-    "401007-MANUTENÇÃO",
-    "401009-MANUTENÇÃO",
-    "401010-OPEX",
+    "201009-ALMOXARIFADO",
+    "401001-AMBULATORIO",
+    "102024-CAMOMILA - P&D",
+    "102027-CAMOMILA - P&D",
+    "301011-CAMOMILA",
+    "102028-CHIA - P&D",
+    "301010-CHIA",
+    "101002-COMPRAS",
+    "101006-COMUNIDADE",
+    "201013-CONTROLE DE QUALIDADE",
+    "201004-DESIDRATACAO",
+    "201015-DESIDRATACAO DE AGRIAO",
+    "101011-ENGENHARIA",
+    "201002-EXTRACAO",
+    "401009-FACILITIES",
+    "101009-FINANCEIRO",
+    "201012-GARANTIA DA QUALIDADE",
+    "101007-GESTAO OPERACIONAL",
+    "201008-LOGISTICA",
+    "201011-MANUTENCAO - PARADA",
+    "401004-MANUTENCAO COMPARTILHADA",
+    "301007-MANUTENCAO FAZENDA",
+    "201007-MANUTENCAO INDUSTRIA",
+    "401007-MANUTENCAO PATRIMONIAL",
+    "102000-PESQUISA E DESENVOLVIMENTO",
+    "401005-PROCOMPET",
+    "201001-PRODUCAO",
+    "401002-RESTAURANTE",
+    "101004-RH",
+    "101005-SEGURANCA E AMBIENTE",
+    "401010-SERVICO DE SUPORTE",
+    "201003-SPRAY DRYER",
+    "101010-TECNOLOGIA DA INFORMACAO",
+    "401003-TRANSPORTE",
+    "201006-UTILIDADES",
+    "101003-VENDAS",
+    "301006-VIVEIRO",
 ]
 
 // Times/Setores disponíveis
 export const TIMES_SETORES = [
-    "Agro",
-    "Manufatura",
-    "Manutenção",
-    "Engenharia",
-    "Opex",
-    "Logistica",
-    "Qualidade",
+    "AGRIAO - P&D",
+    "AGRIAO",
+    "AGRO",
+    "ALMOXARIFADO",
+    "AMBULATORIO",
+    "CAMOMILA - P&D",
+    "CAMOMILA",
+    "CHIA - P&D",
+    "CHIA",
+    "COMPRAS",
+    "COMUNIDADE",
+    "CONTROLE DE QUALIDADE",
+    "DESIDRATACAO",
+    "DESIDRATACAO DE AGRIAO",
+    "ENGENHARIA",
+    "EXTRACAO",
+    "FACILITIES",
+    "FINANCEIRO",
+    "GARANTIA DA QUALIDADE",
+    "GESTAO OPERACIONAL",
+    "LOGISTICA",
+    "MANUTENCAO - PARADA",
+    "MANUTENCAO COMPARTILHADA",
+    "MANUTENCAO FAZENDA",
+    "MANUTENCAO INDUSTRIA",
+    "MANUTENCAO PATRIMONIAL",
+    "PESQUISA E DESENVOLVIMENTO",
+    "PROCOMPET",
+    "PRODUCAO",
+    "RESTAURANTE",
     "RH",
-    "Pesquisa",
+    "SEGURANCA E AMBIENTE",
+    "SERVICO DE SUPORTE",
+    "SPRAY DRYER",
+    "TECNOLOGIA DA INFORMACAO",
+    "TRANSPORTE",
+    "UTILIDADES",
+    "VENDAS",
+    "VIVEIRO",
 ]
 
 /**
@@ -68,7 +105,7 @@ export function verificarRegrasFimDeSemana(dataAgendamento) {
         if (dataAgendamentoObj.getTime() === hoje.getTime()) {
             return {
                 permitido: false,
-                mensagem: "Não é possível realizar agendamentos para sábados."
+                mensagem: "Não é possível realizar agendamentos para esse sábado."
             }
         }
 
@@ -77,7 +114,7 @@ export function verificarRegrasFimDeSemana(dataAgendamento) {
         if (dataAgendamentoObj.getTime() === amanha.getTime()) {
             return {
                 permitido: false,
-                mensagem: "Não é possível realizar agendamentos para domingos."
+                mensagem: "Não é possível realizar agendamentos para esse domingo."
             }
         }
     }
@@ -86,7 +123,7 @@ export function verificarRegrasFimDeSemana(dataAgendamento) {
         if (dataAgendamentoObj.getTime() === hoje.getTime()) {
             return {
                 permitido: false,
-                mensagem: "Não é possível realizar agendamentos para domingos."
+                mensagem: "Não é possível realizar agendamentos para esse domingo."
             }
         }
 

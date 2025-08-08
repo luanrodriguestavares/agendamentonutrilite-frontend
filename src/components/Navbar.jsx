@@ -10,12 +10,20 @@ const Navbar = () => {
 		<nav className="fixed top-0 left-0 right-0 bg-white shadow-md z-50">
 			<div className="container mx-auto px-4">
 				<div className="flex items-center justify-between h-16">
-					<div className="flex items-center space-x-2">
-						<div className="relative h-16 w-16 overflow-hidden">
-							<img src="/logo-nutrilite.png" alt="Logo Nutrilite" className="h-full w-full object-contain" />
+					<div className="flex items-center space-x-4">
+						<div className="relative h-12 w-auto overflow-hidden">
+							<img
+								src="/logo-nutrilite-ts.png"
+								alt="Logo Nutrilite"
+								className="h-full w-auto object-contain max-w-[120px] sm:max-w-[150px] md:max-w-[180px]"
+							/>
 						</div>
-						<div>
-							<span className="text-sm md:text-base font-medium text-gray-800">Fazenda Amway Nutrilite Brasil</span>
+						<div className="relative h-12 w-auto overflow-hidden">
+							<img
+								src="/logo-nutribotanica-ts.png"
+								alt="Logo Nutribotânica"
+								className="h-full w-auto object-contain max-w-[120px] sm:max-w-[150px] md:max-w-[180px]"
+							/>
 						</div>
 					</div>
 					<div className="hidden md:flex items-center space-x-2">
@@ -25,7 +33,7 @@ const Navbar = () => {
 							</Button>
 						</Link>
 					</div>
-					<button 
+					<button
 						className="md:hidden p-2"
 						onClick={() => setIsMenuOpen(!isMenuOpen)}
 					>
